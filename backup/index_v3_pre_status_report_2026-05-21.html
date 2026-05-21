@@ -335,7 +335,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .add-task-inputs{display:none;gap:5px;align-items:center;flex:1;flex-wrap:wrap}
 .add-task-inputs.open{display:flex}
 .add-task-inputs input{font-size:11px;padding:5px 8px;background:var(--bg3)}
-.inp-id{width:60px}.inp-title{flex:1;min-width:140px}.inp-start{width:120px}.inp-due{width:120px}.inp-deps{width:110px}.inp-notes{width:140px}
+.inp-id{width:60px}.inp-title{flex:1;min-width:140px}.inp-due{width:120px}.inp-deps{width:110px}.inp-notes{width:140px}
 
 #add-phase-row{padding:10px 24px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0}
 .add-phase-btn{font-size:12px;color:var(--txt3);background:transparent;padding:5px 10px;border-radius:6px;font-weight:600}
@@ -362,20 +362,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .td-row .v.mono{font-family:var(--mono);font-size:11px}
 .td-row .v.purple{color:var(--purple)}
 .td-row .v.red{color:var(--red)}
-/* Datas & Progresso */
-.td-prog-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px}
-.td-prog-row label{color:var(--txt3);min-width:140px;font-size:11px;flex-shrink:0}
-.td-prog-row input[type=date]{flex:1;min-width:0;font-size:12px;padding:5px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);color:var(--txt)}
-.td-prog-row input[type=date]:focus{outline:2px solid var(--acc);outline-offset:-1px}
-.td-prog-pct{flex-direction:column;align-items:stretch;gap:5px}
-.td-prog-pct > label{min-width:0;margin-bottom:2px}
-.pct-input-wrap{display:flex;align-items:center;gap:10px}
-.pct-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--bg3);outline:none;padding:0;margin:0}
-.pct-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);cursor:pointer;border:2px solid var(--bg2);box-shadow:0 0 0 1px var(--acc)}
-.pct-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--acc);cursor:pointer;border:2px solid var(--bg2)}
-.pct-val{font-family:var(--mono);font-size:12px;font-weight:700;min-width:42px;text-align:right}
-.pct-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden}
-.pct-bar-fill{height:100%;transition:width .25s,background .25s}
 .td-actions{display:flex;flex-direction:column;gap:6px}
 .td-actions button{padding:9px 12px;border-radius:8px;background:var(--bg3);font-size:12px;font-weight:600;text-align:left;display:flex;align-items:center;gap:8px;color:var(--txt2)}
 .td-actions button:hover{background:var(--bg4);color:var(--txt)}
@@ -970,18 +956,6 @@ function migrateProject(p){
       if(t.estimatedHours===undefined){t.estimatedHours=0;changed=true;}
       if(t.assigneeEmail===undefined){t.assigneeEmail='';changed=true;}
       if(!Array.isArray(t.timeEntries)){t.timeEntries=[];changed=true;}
-      // Novos campos pro tracking de progresso (Curva S real, Gantt com inicio)
-      if(t.startDate===undefined){t.startDate='';changed=true;}
-      if(t.completedAt===undefined){
-        // Migracao: tarefas ja DONE ganham dueDate como aproximacao do completedAt
-        t.completedAt = DONE_STATUSES.has(t.status) ? (t.dueDate||'') : '';
-        changed=true;
-      }
-      if(t.percentComplete===undefined){
-        // Migracao: DONE => 100%, resto => 0%
-        t.percentComplete = DONE_STATUSES.has(t.status) ? 100 : 0;
-        changed=true;
-      }
     });
   });
   return changed;
@@ -1161,49 +1135,21 @@ async function initApp(background=false){
       try{const tm=await readFile(state.fileMap['team.json']);state.team=migrateTeam(tm);}catch(e){state.team=migrateTeam({});}
     } else {state.team=migrateTeam({});}
     applyCurrentUserUI();
-    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&n!=='clients.json'&&n!=='team.json');
+    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&n!=='clients.json'&&n!=='team.json');
     addLog(`Carregando ${pFiles.length} projeto(s)...`);
-    // Lê cada projeto, salva SNAPSHOT do JSON cru antes de migrar (pra eventual rollback de dados)
-    const rawAndFlags=await Promise.all(pFiles.map(async fname=>{
-      const raw=await readFile(state.fileMap[fname]);
-      const snapshot=JSON.parse(JSON.stringify(raw)); // copia pré-migração
-      const changed=migrateProject(raw); // muta raw com defaults novos
-      return{raw,snapshot,changed,fname};
-    }));
-    state.projects=rawAndFlags.map(x=>x.raw);
+    const migratedFlags=[];
+    const loaded=await Promise.all(pFiles.map(fname=>readFile(state.fileMap[fname]).then(p=>{const ch=migrateProject(p);migratedFlags.push({p,changed:ch});return p;})));
+    state.projects=loaded;
     saveCache();
-    // Persiste migração no Drive (com backup consolidado antes — idempotente)
-    const toMigrate=rawAndFlags.filter(x=>x.changed);
+    // Persiste migração no Drive (uma vez por projeto, em background, sem travar a UI)
+    const toMigrate=migratedFlags.filter(x=>x.changed).map(x=>x.p);
     if(toMigrate.length){
       addLog(`Atualizando schema de ${toMigrate.length} projeto(s) no Drive...`);
       setSaveStatus('saving');
       (async()=>{
-        // 1) Backup consolidado — só se ainda não existe nenhum (idempotente)
-        const hasBackup=Object.keys(state.fileMap).some(n=>n.startsWith('pre_migration_backup_'));
-        if(!hasBackup){
-          try{
-            const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-            const fname=`pre_migration_backup_${ts}.json`;
-            const payload={
-              timestamp:new Date().toISOString(),
-              note:'Backup automático criado antes da migração de schema para v3. Cada projeto está no estado anterior. Pra restaurar manualmente: abra este arquivo no Drive, encontre o id desejado, copie o objeto, sobrescreva o respectivo <id>.json.',
-              migratedCount:toMigrate.length,
-              projects:toMigrate.map(x=>x.snapshot)
-            };
-            const f=await createDriveFile(state.folderId,fname,payload);
-            state.fileMap[fname]=f.id;
-            addLog(`✓ Backup pré-migração salvo: ${fname}`);
-          }catch(e){
-            console.warn('Backup falhou (seguindo mesmo assim):',e);
-            addLog(`⚠ Falha ao criar backup: ${e.message}. Migração prossegue.`);
-          }
-        } else {
-          addLog('Backup pré-migração já existe — pulando.');
-        }
-        // 2) Save dos projetos migrados (sequencial pra não saturar API)
         let ok=0,fail=0;
-        for(const x of toMigrate){
-          try{await saveProject(x.raw);ok++;}catch(e){fail++;console.warn('Migrate save fail',x.raw.id,e);}
+        for(const p of toMigrate){
+          try{await saveProject(p);ok++;}catch(e){fail++;console.warn('Migrate save fail',p.id,e);}
         }
         setSaveStatus('saved');
         if(fail===0) showToast(`Schema migrado: ${ok} projeto(s) atualizados no Drive`,3500);
@@ -1535,11 +1481,7 @@ const MONTHS_PT=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NO
 const WDAYS_PT=['DOM','SEG','TER','QUA','QUI','SEX','SAB'];
 function getProjectBounds(proj){
   const allDates=[];
-  (proj.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    if(t.startDate) allDates.push(parseISODate(t.startDate));
-    if(t.dueDate) allDates.push(parseISODate(t.dueDate));
-    if(t.completedAt) allDates.push(parseISODate(t.completedAt));
-  }));
+  (proj.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{if(t.dueDate) allDates.push(parseISODate(t.dueDate));}));
   if(!allDates.length){const today=new Date();return{start:today,end:new Date(today.getTime()+14*864e5)};}
   return{start:new Date(Math.min(...allDates)),end:new Date(Math.max(...allDates))};
 }
@@ -1858,11 +1800,6 @@ ${(t.depUids||[]).map(d=>`      <PredecessorLink><PredecessorUID>${d}</Predecess
 
 function genStatusReport(){
   const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj){showToast('Selecione um projeto');return;}
-  const html=buildStatusReportHTML(proj);
-  const w=window.open('','_blank');w.document.write(html);w.document.close();
-  showToast('Status Report aberto');
-}
-function buildStatusReportHTML(proj){
   const today=new Date().toISOString().slice(0,10);
   const allTasks=(proj.phases||[]).flatMap(ph=>(ph.tasks||[]).map(t=>({...t,_phase:ph.name})));
   const done=allTasks.filter(t=>DONE_STATUSES.has(t.status));
@@ -1873,7 +1810,6 @@ function buildStatusReportHTML(proj){
   const totalAct=allTasks.reduce((s,t)=>s+taskActualHours(t),0);
   const pct=allTasks.length?Math.round(done.length/allTasks.length*100):0;
   const bounds=getProjectBounds(proj);
-  const fmtIso=s=>{if(!s) return '';const[y,m,d]=s.split('-');return `${d}/${m}/${y}`;};
   const phaseRows=(proj.phases||[]).map((ph,i)=>{
     const tasks=ph.tasks||[];const d=tasks.filter(t=>DONE_STATUSES.has(t.status)).length;
     const e=tasks.reduce((s,t)=>s+(Number(t.estimatedHours)||0),0);const a=tasks.reduce((s,t)=>s+taskActualHours(t),0);
@@ -1881,210 +1817,21 @@ function buildStatusReportHTML(proj){
     return `<tr><td><span style="display:inline-block;width:10px;height:10px;background:#${color};border-radius:2px;margin-right:6px"></span>${esc(ph.name)}</td><td style="text-align:center">${d}/${tasks.length}</td><td><div style="background:#eee;border-radius:3px;height:8px;overflow:hidden;width:130px"><div style="background:#${color};height:100%;width:${ppct}%"></div></div></td><td style="text-align:right">${ppct}%</td><td style="text-align:right">${formatHours(a)} / ${formatHours(e)}</td></tr>`;
   }).join('');
   const taskLine=(t,extra)=>`<tr><td style="font-family:monospace;font-size:10px;color:#888;padding-right:8px">${esc(t.id)}</td><td>${esc(t.title)}</td><td style="font-size:10px;color:#888">${esc(t._phase)}</td><td style="text-align:right">${extra||''}</td></tr>`;
-
-  // ── GANTT por fase ────────────────────────────────────────────────────
-  const ganttSVG=(()=>{
-    const phasesWithDates=(proj.phases||[]).map((ph,i)=>{
-      // Inicio da fase = min(startDate || dueDate) entre tasks; Fim = max(dueDate)
-      const starts=(ph.tasks||[]).map(t=>t.startDate||t.dueDate).filter(Boolean);
-      const ends=(ph.tasks||[]).map(t=>t.dueDate).filter(Boolean);
-      if(!ends.length) return null;
-      const phStart=Math.min(...starts.map(d=>+parseISODate(d)));
-      const phEnd=Math.max(...ends.map(d=>+parseISODate(d)));
-      const t=ph.tasks||[];
-      // Progresso da fase: media ponderada do percentComplete (cai pra count(DONE)/total se ninguem setou %)
-      const totPct=t.reduce((s,x)=>s+(Number(x.percentComplete)||0),0);
-      const ppct=t.length?totPct/t.length:0;
-      return{name:ph.name,start:phStart,end:phEnd,pct:ppct,color:phaseColorAt(i)};
-    }).filter(Boolean);
-    if(!phasesWithDates.length) return '<div class="empty">Sem datas nas atividades para gerar Gantt.</div>';
-    const startMs=+bounds.start;const endMs=+bounds.end;const span=Math.max(1,endMs-startMs);
-    const W=720,ROW=26,HEAD=22,LBL=160,PAD_R=40;
-    const barArea=W-LBL-PAD_R;const todayMs=+new Date();
-    const todayX=LBL+((todayMs-startMs)/span)*barArea;
-    // tics de mes
-    const months=[];const cur=new Date(startMs);cur.setDate(1);
-    while(+cur<=endMs){const xm=LBL+((+cur-startMs)/span)*barArea;months.push({label:MONTHS_PT[cur.getMonth()]+'/'+String(cur.getFullYear()).slice(2),x:xm});cur.setMonth(cur.getMonth()+1);}
-    const H=HEAD+phasesWithDates.length*ROW+18;
-    const bars=phasesWithDates.map((p,i)=>{
-      const y=HEAD+i*ROW+3;const h=ROW-8;
-      const x=LBL+((p.start-startMs)/span)*barArea;
-      const w=Math.max(4,((p.end-p.start)/span)*barArea);
-      return `<text x="${LBL-8}" y="${y+h/2+3}" font-size="10" text-anchor="end" fill="#1a1a18">${esc(p.name)}</text>
-              <rect x="${x.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${h}" rx="3" fill="#${p.color}33" stroke="#${p.color}" stroke-width=".8"/>
-              <rect x="${x.toFixed(1)}" y="${y}" width="${(w*p.pct/100).toFixed(1)}" height="${h}" rx="3" fill="#${p.color}"/>
-              <text x="${(x+w+5).toFixed(1)}" y="${y+h/2+3}" font-size="9" fill="#666">${Math.round(p.pct)}%</text>`;
-    }).join('');
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit">
-      ${months.map(m=>`<line x1="${m.x.toFixed(1)}" y1="${HEAD}" x2="${m.x.toFixed(1)}" y2="${H-8}" stroke="#eee" stroke-width="1"/><text x="${m.x.toFixed(1)}" y="${HEAD-5}" font-size="9" fill="#888" text-anchor="middle">${m.label}</text>`).join('')}
-      ${todayMs>=startMs&&todayMs<=endMs?`<line x1="${todayX.toFixed(1)}" y1="${HEAD-2}" x2="${todayX.toFixed(1)}" y2="${H-8}" stroke="#a32d2d" stroke-width="1.5" stroke-dasharray="3,3"/><text x="${(todayX+3).toFixed(1)}" y="${HEAD-5}" font-size="9" fill="#a32d2d" font-weight="700">hoje</text>`:''}
-      ${bars}
-    </svg>`;
-  })();
-
-  // ── CURVA S (% de atividades concluidas: planejado vs real) ───────────
-  // Planejado: cada task contribui linearmente entre startDate e dueDate. Cumulativo / total = %.
-  // Real: contribuicao no completedAt da task (1 ponto). Tasks em progresso adicionam percentComplete/100 no "hoje".
-  const scurveSVG=(()=>{
-    const startMs=+bounds.start;const endMs=+bounds.end;const span=Math.max(1,endMs-startMs);
-    const todayObj=new Date();todayObj.setHours(0,0,0,0);const todayMs=+todayObj;
-    // Pre-computa metadata por task (so as que tem dueDate participam)
-    const meta=allTasks.map(t=>{
-      const due=t.dueDate?+parseISODate(t.dueDate):null;
-      const start=t.startDate?+parseISODate(t.startDate):(due?due-864e5:null); // fallback: 1 dia antes do due
-      const completedAt=t.completedAt?+parseISODate(t.completedAt):null;
-      const pct=Math.max(0,Math.min(100,Number(t.percentComplete)||0));
-      const isDone=DONE_STATUSES.has(t.status);
-      return{start,due,completedAt,pct,isDone};
-    }).filter(m=>m.due);
-    const total=meta.length;
-    if(!total) return '<div class="empty">Sem prazos definidos nas atividades.</div>';
-    const planejadoAt=D=>meta.reduce((s,m)=>{
-      if(!m.start||!m.due) return s;
-      if(D>=m.due) return s+1;
-      if(D<=m.start) return s;
-      return s+(D-m.start)/(m.due-m.start);
-    },0);
-    const realAt=D=>meta.reduce((s,m)=>{
-      if(m.completedAt&&m.completedAt<=D) return s+1;
-      // Em progresso parcial soh contribui no "hoje" (nao temos historico de %, eh um snapshot)
-      if(D>=todayMs&&!m.isDone&&m.pct>0&&m.pct<100) return s+m.pct/100;
-      return s;
-    },0);
-    // Datas relevantes para amostrar a curva
-    const sampleSet=new Set([startMs,endMs,todayMs]);
-    meta.forEach(m=>{if(m.start) sampleSet.add(m.start);if(m.due) sampleSet.add(m.due);if(m.completedAt) sampleSet.add(m.completedAt);});
-    const sampled=[...sampleSet].filter(d=>d>=startMs&&d<=endMs).sort((a,b)=>a-b);
-    const W=720,H=240,PAD_L=58,PAD_R=20,PAD_T=20,PAD_B=30;
-    const chartW=W-PAD_L-PAD_R;const chartH=H-PAD_T-PAD_B;
-    const xOf=ms=>PAD_L+((ms-startMs)/span)*chartW;
-    const yOf=pct=>PAD_T+chartH-(pct/100)*chartH;
-    const progPts=sampled.map(D=>({x:xOf(D),y:yOf(planejadoAt(D)/total*100)}));
-    const realPtsRaw=sampled.filter(D=>D<=todayMs).map(D=>({x:xOf(D),y:yOf(realAt(D)/total*100)}));
-    // Estado atual (hoje) — ponto destacado
-    const pctRealHoje=Math.round(realAt(todayMs)/total*100);
-    const pctPlanHoje=Math.round(planejadoAt(todayMs)/total*100);
-    const pathOf=pts=>pts.map((p,i)=>(i===0?'M':'L')+p.x.toFixed(1)+','+p.y.toFixed(1)).join('');
-    const yTicks=[0,25,50,75,100].map(p=>({y:yOf(p),label:p+'%'}));
-    const months=[];const cur=new Date(startMs);cur.setDate(1);
-    while(+cur<=endMs){const x=xOf(+cur);if(x>=PAD_L&&x<=W-PAD_R) months.push({label:MONTHS_PT[cur.getMonth()]+'/'+String(cur.getFullYear()).slice(2),x});cur.setMonth(cur.getMonth()+1);}
-    const todayX=xOf(todayMs);
-    const todayInRange=todayMs>=startMs&&todayMs<=endMs;
-    const diff=pctRealHoje-pctPlanHoje;const diffLabel=(diff>=0?'+':'')+diff+'%';
-    const diffColor=diff>=0?'#3b6d11':diff>=-5?'#854f0b':'#a32d2d';
-    return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit">
-      ${yTicks.map(t=>`<line x1="${PAD_L}" y1="${t.y.toFixed(1)}" x2="${W-PAD_R}" y2="${t.y.toFixed(1)}" stroke="#eee" stroke-width="1"/><text x="${PAD_L-6}" y="${(t.y+3).toFixed(1)}" font-size="9" fill="#888" text-anchor="end">${t.label}</text>`).join('')}
-      ${months.map(m=>`<text x="${m.x.toFixed(1)}" y="${H-PAD_B+14}" font-size="9" fill="#888" text-anchor="middle">${m.label}</text>`).join('')}
-      ${todayInRange?`<line x1="${todayX.toFixed(1)}" y1="${PAD_T}" x2="${todayX.toFixed(1)}" y2="${H-PAD_B}" stroke="#a32d2d" stroke-width="1.5" stroke-dasharray="3,3"/><text x="${(todayX+3).toFixed(1)}" y="${PAD_T+10}" font-size="9" fill="#a32d2d" font-weight="700">hoje</text>`:''}
-      <path d="${pathOf(progPts)}" stroke="#1F2937" stroke-width="2" fill="none"/>
-      ${realPtsRaw.length?`<path d="${pathOf(realPtsRaw)}" stroke="#4F81BD" stroke-width="2.2" fill="none"/>`:''}
-      ${realPtsRaw.length&&todayInRange?`<circle cx="${todayX.toFixed(1)}" cy="${yOf(realAt(todayMs)/total*100).toFixed(1)}" r="3.5" fill="#4F81BD" stroke="#fff" stroke-width="1.5"/>`:''}
-      <g transform="translate(${PAD_L+8},${PAD_T+8})">
-        <rect x="-4" y="-10" width="240" height="48" rx="4" fill="#fff" fill-opacity=".88"/>
-        <line x1="0" y1="0" x2="22" y2="0" stroke="#1F2937" stroke-width="2"/><text x="28" y="3" font-size="10" fill="#444">Planejado · ${pctPlanHoje}% hoje · 100% no fim</text>
-        <line x1="0" y1="14" x2="22" y2="14" stroke="#4F81BD" stroke-width="2.2"/><text x="28" y="17" font-size="10" fill="#444">Real · ${pctRealHoje}% hoje</text>
-        <text x="0" y="32" font-size="10" font-weight="700" fill="${diffColor}">Δ ${diffLabel} ${diff>=0?'(no ritmo ou adiantado)':'(atrasado)'}</text>
-      </g>
-    </svg>`;
-  })();
-
-  // ── DETALHAMENTO POR FASE ─────────────────────────────────────────────
-  const phaseDetail=(proj.phases||[]).map((ph,i)=>{
-    const color=phaseColorAt(i);const tasks=ph.tasks||[];
-    const d=tasks.filter(t=>DONE_STATUSES.has(t.status)).length;
-    const avgPct=tasks.length?Math.round(tasks.reduce((s,x)=>s+(Number(x.percentComplete)||0),0)/tasks.length):0;
-    if(!tasks.length) return `<div class="phase-detail" style="border-left:4px solid #${color}"><h3>${esc(ph.name)} <span class="ph-meta">vazia</span></h3><div class="empty">Sem atividades.</div></div>`;
-    const rows=tasks.map(t=>{
-      const isDone=DONE_STATUSES.has(t.status);
-      const isOv=t.dueDate&&t.dueDate<today&&!isDone&&t.status!=='OBSOLETA';
-      const isBlk=isDepsBlocked(t,proj);
-      const respM=memberByEmail(t.assigneeEmail);
-      const resp=respM?respM.name:(t.executor||'—');
-      const act=taskActualHours(t);const est=Number(t.estimatedHours)||0;
-      const hours=est>0?`${formatHours(act)}/${formatHours(est)}`:(act>0?formatHours(act):'—');
-      const cls=isDone?'done':(isOv?'overdue':(isBlk?'blocked':''));
-      const statusKey=(t.status||'PENDENTE').replace(/\s+/g,'_').replace(/\//g,'_');
-      const pct=Math.max(0,Math.min(100,Number(t.percentComplete)||0));
-      const pctBarColor=pct>=100?'#3b6d11':pct>=66?'#185fa5':pct>=33?'#854f0b':'#bbb';
-      const pctCell=`<div class="mini-pct"><div class="mini-pct-bar"><div class="mini-pct-fill" style="width:${pct}%;background:${pctBarColor}"></div></div><span class="mini-pct-val">${pct}%</span></div>`;
-      const dateRange=t.startDate?`${fmtIso(t.startDate)} → ${t.dueDate?fmtIso(t.dueDate):'—'}`:(t.dueDate?fmtIso(t.dueDate):'—');
-      return `<tr class="${cls}"><td class="tid">${esc(t.id)}</td><td class="ttl">${esc(t.title)}</td><td><span class="status-pill p-${statusKey}">${esc(t.status||'PENDENTE')}</span></td><td>${esc(resp)}</td><td class="num">${dateRange}</td><td>${pctCell}</td><td class="num">${hours}</td></tr>`;
-    }).join('');
-    return `<div class="phase-detail" style="border-left:4px solid #${color}">
-      <h3>${esc(ph.name)} <span class="ph-meta">${d}/${tasks.length} concluídas · ${avgPct}% médio</span></h3>
-      <table class="phase-table"><thead><tr><th>ID</th><th>Atividade</th><th>Status</th><th>Resp.</th><th>Período</th><th>Execução</th><th>Horas</th></tr></thead><tbody>${rows}</tbody></table>
-    </div>`;
-  }).join('');
-
   const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Status Report — ${esc(proj.name)}</title>
-<style>
-@page{margin:18mm}
-body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a18;font-size:11px;line-height:1.45;max-width:900px;margin:0 auto;padding:24px}
-h1{font-size:22px;margin:0;letter-spacing:-.02em}
-h2{font-size:13px;margin:24px 0 8px;color:#1a1a18;border-bottom:2px solid #1F2937;padding-bottom:4px;letter-spacing:.02em;text-transform:uppercase}
-.cover{background:#1F2937;color:#fff;padding:32px;margin:-24px -24px 24px}
-.cover h1{color:#fff}.cover .sub{opacity:.85;font-size:12px;margin-top:4px}
-.kpis{display:flex;gap:12px;margin:16px 0 8px}
-.kpi{flex:1;background:#f8f7f4;border-radius:8px;padding:12px 14px}
-.kpi .v{font-size:22px;font-weight:700;color:#1F2937}
-.kpi .l{font-size:9px;text-transform:uppercase;color:#6b6a66;letter-spacing:.06em;margin-top:4px}
-.kpi.r{background:#fcebeb}.kpi.r .v{color:#a32d2d}
-.kpi.a{background:#faeeda}.kpi.a .v{color:#854f0b}
-.kpi.g{background:#eaf3de}.kpi.g .v{color:#3b6d11}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th,td{padding:6px 8px;border-bottom:1px solid #e5e4de;text-align:left;vertical-align:top}
-th{background:#f8f7f4;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6b6a66;font-weight:700}
-.empty{color:#9e9d99;font-style:italic;padding:8px 0}
-.progress-big{height:14px;background:#f0efe9;border-radius:7px;overflow:hidden;margin:8px 0 12px}
-.progress-big div{height:100%;background:#4F81BD}
-.footer{margin-top:30px;text-align:center;font-size:9px;color:#9e9d99}
-.print-btn{position:fixed;top:16px;right:16px;background:#1F2937;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-@media print{.print-btn{display:none}}
-/* Gantt / Curva S */
-.chart-box{background:#fafafa;border-radius:8px;padding:14px 12px;margin:8px 0 16px;page-break-inside:avoid}
-/* Detalhamento por fase */
-.phase-detail{margin:14px 0;padding:0 0 0 14px;page-break-inside:avoid}
-.phase-detail h3{font-size:12px;font-weight:700;margin:14px 0 6px;color:#1a1a18}
-.phase-detail .ph-meta{font-weight:500;color:#888;font-size:10px;margin-left:8px}
-.phase-table{width:100%;margin-bottom:4px}
-.phase-table th{background:#f8f7f4;font-size:9px;padding:5px 7px}
-.phase-table td{font-size:10px;padding:5px 7px;border-bottom:1px solid #f0efe9;vertical-align:middle}
-.phase-table .tid{font-family:monospace;font-size:9px;color:#888;white-space:nowrap;width:60px}
-.phase-table .ttl{color:#1a1a18}
-.phase-table .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.mini-pct{display:flex;align-items:center;gap:6px;min-width:100px}
-.mini-pct-bar{flex:1;height:6px;background:#eee;border-radius:3px;overflow:hidden;min-width:50px}
-.mini-pct-fill{height:100%;border-radius:3px}
-.mini-pct-val{font-family:monospace;font-size:9px;color:#555;min-width:32px;text-align:right}
-.phase-table tr.done .ttl{text-decoration:line-through;color:#888}
-.phase-table tr.done{background:#f7faf2}
-.phase-table tr.overdue{background:#fcebeb}
-.phase-table tr.overdue .num{color:#a32d2d;font-weight:700}
-.phase-table tr.blocked{background:#fdf5e6}
-.status-pill{font-size:9px;padding:2px 7px;border-radius:100px;font-weight:700;white-space:nowrap;background:#f0efe9;color:#555;display:inline-block;line-height:1.4}
-.status-pill.p-CONCLUÍDO,.status-pill.p-APROVADO,.status-pill.p-APROVADO_c_ressalva{background:#d4ecc4;color:#3b6d11}
-.status-pill.p-EM_ANDAMENTO{background:#d9e7f7;color:#185fa5}
-.status-pill.p-PENDENTE{background:#f0efe9;color:#555}
-.status-pill.p-BLOQUEADO{background:#faeeda;color:#854f0b}
-.status-pill.p-AGUARDANDO_CLIENTE{background:#fbe3ef;color:#982a5a}
-.status-pill.p-GATE{background:#e4d9f5;color:#5a4399}
-.status-pill.p-OBSOLETA{background:#f0efe9;color:#aaa;text-decoration:line-through}
-</style>
+<style>@page{margin:18mm}body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1a1a18;font-size:11px;line-height:1.45;max-width:900px;margin:0 auto;padding:24px}h1{font-size:22px;margin:0;letter-spacing:-.02em}h2{font-size:13px;margin:24px 0 8px;color:#1a1a18;border-bottom:2px solid #1F2937;padding-bottom:4px;letter-spacing:.02em;text-transform:uppercase}.cover{background:#1F2937;color:#fff;padding:32px;margin:-24px -24px 24px}.cover h1{color:#fff}.cover .sub{opacity:.85;font-size:12px;margin-top:4px}.kpis{display:flex;gap:12px;margin:16px 0 8px}.kpi{flex:1;background:#f8f7f4;border-radius:8px;padding:12px 14px}.kpi .v{font-size:22px;font-weight:700;color:#1F2937}.kpi .l{font-size:9px;text-transform:uppercase;color:#6b6a66;letter-spacing:.06em;margin-top:4px}.kpi.r{background:#fcebeb}.kpi.r .v{color:#a32d2d}.kpi.a{background:#faeeda}.kpi.a .v{color:#854f0b}.kpi.g{background:#eaf3de}.kpi.g .v{color:#3b6d11}table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:6px 8px;border-bottom:1px solid #e5e4de;text-align:left;vertical-align:top}th{background:#f8f7f4;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6b6a66;font-weight:700}.empty{color:#9e9d99;font-style:italic;padding:8px 0}.progress-big{height:14px;background:#f0efe9;border-radius:7px;overflow:hidden;margin:8px 0 12px}.progress-big div{height:100%;background:#4F81BD}.footer{margin-top:30px;text-align:center;font-size:9px;color:#9e9d99}.print-btn{position:fixed;top:16px;right:16px;background:#1F2937;color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.15)}@media print{.print-btn{display:none}}</style>
 </head><body><button class="print-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="cover"><h1>Status Report</h1><div class="sub">${esc(proj.name)}${proj.client?` · ${esc(proj.client)}`:''}  ·  Gerado em ${fmtDMY(new Date())}</div></div>
 <div class="kpis"><div class="kpi g"><div class="v">${pct}%</div><div class="l">Concluído</div></div><div class="kpi"><div class="v">${done.length}/${allTasks.length}</div><div class="l">Tarefas feitas</div></div><div class="kpi r"><div class="v">${overdue.length}</div><div class="l">Atrasadas</div></div><div class="kpi a"><div class="v">${blocked.length}</div><div class="l">Bloqueadas</div></div></div>
 <div class="progress-big"><div style="width:${pct}%"></div></div>
 <h2>Resumo Executivo</h2><p style="color:#444">Projeto <strong>${esc(proj.name)}</strong>${proj.client?` para <strong>${esc(proj.client)}</strong>`:''} planejado de <strong>${fmtDMY(bounds.start)}</strong> a <strong>${fmtDMY(bounds.end)}</strong>. ${allTasks.length} atividades distribuídas em ${(proj.phases||[]).length} fases. Horas: <strong>${formatHours(totalAct)} apontadas</strong> de <strong>${formatHours(totalEst)} estimadas</strong>${totalEst>0?` (${Math.round(totalAct/totalEst*100)}%)`:''}. ${overdue.length>0?` <span style="color:#a32d2d">⚠ ${overdue.length} atividade(s) com prazo vencido.</span>`:''}${blocked.length>0?` <span style="color:#854f0b">🔒 ${blocked.length} bloqueadas por dependência.</span>`:''}</p>
-<h2>Cronograma · Gantt por Fase</h2><div class="chart-box">${ganttSVG}</div>
-<h2>Curva S · % de Atividades Concluídas</h2><div class="chart-box">${scurveSVG}</div>
 <h2>Progresso por Fase</h2><table><thead><tr><th>Fase</th><th style="text-align:center">Concluído</th><th>Progresso</th><th style="text-align:right">%</th><th style="text-align:right">Horas</th></tr></thead><tbody>${phaseRows}</tbody></table>
-<h2>Detalhamento por Fase</h2>${phaseDetail||'<div class="empty">Sem fases.</div>'}
-<h2>Atividades Atrasadas (${overdue.length})</h2>${overdue.length===0?'<div class="empty">Nenhuma.</div>':`<table><tbody>${overdue.slice(0,15).map(t=>taskLine(t,`<span style="color:#a32d2d">${fmtIso(t.dueDate)}</span>`)).join('')}</tbody></table>`}
+<h2>Atividades Atrasadas (${overdue.length})</h2>${overdue.length===0?'<div class="empty">Nenhuma.</div>':`<table><tbody>${overdue.slice(0,15).map(t=>taskLine(t,`<span style="color:#a32d2d">${t.dueDate}</span>`)).join('')}</tbody></table>`}
 <h2>Bloqueadas por Dependência (${blocked.length})</h2>${blocked.length===0?'<div class="empty">Nenhuma.</div>':`<table><tbody>${blocked.slice(0,15).map(t=>taskLine(t,`<span style="color:#854f0b">aguarda: ${esc((t.deps||[]).join(', '))}</span>`)).join('')}</tbody></table>`}
-<h2>Próximos 14 dias (${upcoming.length})</h2>${upcoming.length===0?'<div class="empty">Sem prazos nos próximos 14 dias.</div>':`<table><tbody>${upcoming.slice(0,20).map(t=>taskLine(t,`<span style="color:#185fa5">${fmtIso(t.dueDate)}</span>`)).join('')}</tbody></table>`}
+<h2>Próximos 14 dias (${upcoming.length})</h2>${upcoming.length===0?'<div class="empty">Sem prazos nos próximos 14 dias.</div>':`<table><tbody>${upcoming.slice(0,20).map(t=>taskLine(t,`<span style="color:#185fa5">${t.dueDate}</span>`)).join('')}</tbody></table>`}
 <div class="footer">ProjectManager · ${esc(state.currentUserName||'')} ${state.currentUserEmail?'· '+esc(state.currentUserEmail):''}</div>
 </body></html>`;
-  return html;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();
+  showToast('Status Report aberto');
 }
 // ═══ CLIENTS MANAGER ═══
 async function saveClients(){
@@ -2425,22 +2172,19 @@ function hideAddTask(phaseId){
   el.classList.remove('open');
   ['id','title','notes','deps'].forEach(f=>{const x=document.getElementById('at-'+f+'-'+phaseId);if(x) x.value='';});
   const due=document.getElementById('at-due-'+phaseId);if(due) due.value='';
-  const start=document.getElementById('at-start-'+phaseId);if(start) start.value='';
 }
 function submitAddTask(phaseId){
   const id=document.getElementById('at-id-'+phaseId).value.trim();
   const title=document.getElementById('at-title-'+phaseId).value.trim();
   const notes=document.getElementById('at-notes-'+phaseId).value.trim();
-  const startDate=document.getElementById('at-start-'+phaseId)?.value||'';
   const dueDate=document.getElementById('at-due-'+phaseId).value||'';
   const depsRaw=document.getElementById('at-deps-'+phaseId).value.trim();
   const deps=depsRaw?depsRaw.split(/[\s,]+/).map(s=>s.trim()).filter(Boolean):[];
   if(!title){showToast('Título é obrigatório');return;}
-  if(startDate&&dueDate&&startDate>dueDate){showToast('Data de início deve ser anterior ao prazo');return;}
   const proj=state.projects.find(p=>p.id===state.selectedProjId);
   const phase=proj?.phases?.find(p=>p.id===phaseId);if(!phase) return;
   phase.tasks=phase.tasks||[];
-  const newTask={id:id||'t_'+Date.now(),title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,startDate,completedAt:'',percentComplete:0,deps,estimatedHours:0,timeEntries:[]};
+  const newTask={id:id||'t_'+Date.now(),title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,deps,estimatedHours:0,timeEntries:[]};
   phase.tasks.push(newTask);
   proj.updatedAt=new Date().toISOString();
   hideAddTask(phaseId);render();scheduleSave(proj);showToast(`"${title}" criada`);
@@ -2459,20 +2203,7 @@ function deleteTask(projId,phaseId,taskId){
 function updateStatus(projId,phaseId,taskId,newStatus){
   const proj=state.projects.find(p=>p.id===projId);if(!proj) return;
   const task=proj.phases?.find(p=>p.id===phaseId)?.tasks?.find(t=>t.id===taskId);if(!task) return;
-  const wasDone=DONE_STATUSES.has(task.status);
-  const isDone=DONE_STATUSES.has(newStatus);
-  task.status=newStatus;
-  // Auto-tracking de conclusão: status DONE preenche completedAt e percentComplete=100.
-  // Usuário pode editar ambos manualmente depois (ex: ajustar data real de conclusão).
-  if(isDone && !wasDone){
-    if(!task.completedAt) task.completedAt=new Date().toISOString().slice(0,10);
-    if((Number(task.percentComplete)||0)<100) task.percentComplete=100;
-  } else if(!isDone && wasDone){
-    // Reverte: limpa completedAt e zera percentComplete (se estava 100 — preserva valores intermediários)
-    task.completedAt='';
-    if(Number(task.percentComplete)===100) task.percentComplete=0;
-  }
-  proj.updatedAt=new Date().toISOString();scheduleSave(proj);render();
+  task.status=newStatus;proj.updatedAt=new Date().toISOString();scheduleSave(proj);render();
 }
 function updateTaskField(projId,phaseId,taskId,field,value){
   const proj=state.projects.find(p=>p.id===projId);if(!proj) return;
@@ -2822,8 +2553,7 @@ function renderPhase(proj,ph){
         <div class="add-task-inputs" id="atf-${esc(ph.id)}">
           <input class="inp-id" placeholder="ID" id="at-id-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
           <input class="inp-title" placeholder="Título *" id="at-title-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
-          <input class="inp-start" type="date" id="at-start-${esc(ph.id)}" title="Data de início prevista">
-          <input class="inp-due" type="date" id="at-due-${esc(ph.id)}" title="Prazo (data de fim)">
+          <input class="inp-due" type="date" id="at-due-${esc(ph.id)}">
           <input class="inp-deps" placeholder="Deps" id="at-deps-${esc(ph.id)}">
           <input class="inp-notes" placeholder="Notas" id="at-notes-${esc(ph.id)}">
           <button class="btn primary" onclick="submitAddTask('${esc(ph.id)}')">OK</button>
@@ -2885,8 +2615,6 @@ function renderTaskDetailPane(){
   const act=taskActualHours(task);const est=Number(task.estimatedHours)||0;
   const isRunning=state.timer&&state.timer.taskId===task.id;
   const entries=(task.timeEntries||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const pct=Math.max(0,Math.min(100,Number(task.percentComplete)||0));
-  const pctColor=pct>=100?'var(--green)':pct>=66?'var(--acc)':pct>=33?'var(--amber)':'var(--txt3)';
   return `<div class="pane pane-right open">
     <div class="td-hdr">
       <div class="td-hdr-body">
@@ -2906,30 +2634,6 @@ function renderTaskDetailPane(){
         <div class="td-row"><span class="k">Estimado</span><span class="v mono">${est?formatHours(est):'—'}</span></div>
         <div class="td-row"><span class="k">Apontado</span><span class="v mono purple">${formatHours(act)}${est&&act>est?` <span style="color:var(--red);font-size:10px">(+${Math.round((act-est)/est*100)}%)</span>`:''}</span></div>
         <div class="td-row"><span class="k">Deps</span><span class="v mono">${task.deps&&task.deps.length?esc(task.deps.join(', ')):'—'}</span></div>
-      </div>
-
-      <div class="td-section">
-        <h4>Datas &amp; Progresso</h4>
-        <div class="td-prog-row">
-          <label>Data início (prevista)</label>
-          <input type="date" value="${esc(task.startDate||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','startDate',this.value);render()">
-        </div>
-        <div class="td-prog-row">
-          <label>Prazo (data de fim)</label>
-          <input type="date" value="${esc(task.dueDate||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','dueDate',this.value);render()">
-        </div>
-        <div class="td-prog-row">
-          <label>Data de conclusão (real)</label>
-          <input type="date" value="${esc(task.completedAt||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','completedAt',this.value);render()" title="${task.completedAt?'Preenchida automaticamente quando o status virou concluído. Edite se executou em outra data.':'Preenche sozinho quando você marcar como concluído.'}">
-        </div>
-        <div class="td-prog-row td-prog-pct">
-          <label>% Executado</label>
-          <div class="pct-input-wrap">
-            <input type="range" min="0" max="100" step="5" value="${pct}" oninput="document.getElementById('pct-val-${esc(task.id)}').textContent=this.value+'%';document.getElementById('pct-bar-${esc(task.id)}').style.width=this.value+'%'" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','percentComplete',Number(this.value));render()" class="pct-slider">
-            <span id="pct-val-${esc(task.id)}" class="pct-val" style="color:${pctColor}">${pct}%</span>
-          </div>
-          <div class="pct-bar"><div id="pct-bar-${esc(task.id)}" class="pct-bar-fill" style="width:${pct}%;background:${pctColor}"></div></div>
-        </div>
       </div>
 
       <div class="td-section">
