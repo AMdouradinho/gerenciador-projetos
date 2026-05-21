@@ -930,22 +930,25 @@ function getStats(p){
 }
 
 // ═══ MIGRATE ═══
+// Retorna true se algum campo foi adicionado/corrigido (util pra persistir migração).
 function migrateProject(p){
-  if(p.client===undefined) p.client='';
-  if(p.type===undefined) p.type='projeto';
-  if(p.visibility===undefined) p.visibility='public';
-  if(!Array.isArray(p.members)) p.members=[];
-  if(p.createdBy===undefined) p.createdBy='';
+  let changed=false;
+  if(p.client===undefined){p.client='';changed=true;}
+  if(p.type===undefined){p.type='projeto';changed=true;}
+  if(p.visibility===undefined){p.visibility='public';changed=true;}
+  if(!Array.isArray(p.members)){p.members=[];changed=true;}
+  if(p.createdBy===undefined){p.createdBy='';changed=true;}
   (p.phases||[]).forEach(ph=>{
     (ph.tasks||[]).forEach(t=>{
-      if(!Array.isArray(t.deps)) t.deps=[];
-      if(t.dueDate===undefined) t.dueDate='';
-      if(t.executor===undefined) t.executor='';
-      if(t.estimatedHours===undefined) t.estimatedHours=0;
-      if(t.assigneeEmail===undefined) t.assigneeEmail='';
-      if(!Array.isArray(t.timeEntries)) t.timeEntries=[];
+      if(!Array.isArray(t.deps)){t.deps=[];changed=true;}
+      if(t.dueDate===undefined){t.dueDate='';changed=true;}
+      if(t.executor===undefined){t.executor='';changed=true;}
+      if(t.estimatedHours===undefined){t.estimatedHours=0;changed=true;}
+      if(t.assigneeEmail===undefined){t.assigneeEmail='';changed=true;}
+      if(!Array.isArray(t.timeEntries)){t.timeEntries=[];changed=true;}
     });
   });
+  return changed;
 }
 function migrateTeam(team){
   if(!team||typeof team!=='object') team={};
@@ -1124,9 +1127,25 @@ async function initApp(background=false){
     applyCurrentUserUI();
     const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&n!=='clients.json'&&n!=='team.json');
     addLog(`Carregando ${pFiles.length} projeto(s)...`);
-    const loaded=await Promise.all(pFiles.map(fname=>readFile(state.fileMap[fname]).then(p=>{migrateProject(p);return p;})));
+    const migratedFlags=[];
+    const loaded=await Promise.all(pFiles.map(fname=>readFile(state.fileMap[fname]).then(p=>{const ch=migrateProject(p);migratedFlags.push({p,changed:ch});return p;})));
     state.projects=loaded;
     saveCache();
+    // Persiste migração no Drive (uma vez por projeto, em background, sem travar a UI)
+    const toMigrate=migratedFlags.filter(x=>x.changed).map(x=>x.p);
+    if(toMigrate.length){
+      addLog(`Atualizando schema de ${toMigrate.length} projeto(s) no Drive...`);
+      setSaveStatus('saving');
+      (async()=>{
+        let ok=0,fail=0;
+        for(const p of toMigrate){
+          try{await saveProject(p);ok++;}catch(e){fail++;console.warn('Migrate save fail',p.id,e);}
+        }
+        setSaveStatus('saved');
+        if(fail===0) showToast(`Schema migrado: ${ok} projeto(s) atualizados no Drive`,3500);
+        else showToast(`Migrado ${ok}, falhou ${fail}. Veja console.`,5000);
+      })();
+    }
     if(!background){
       showScreen('app');
       render();
