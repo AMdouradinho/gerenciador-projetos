@@ -2252,6 +2252,13 @@ async function claimTask(projId,phaseId,taskId){
   scheduleSave(proj);
   showToast(`Você assumiu "${task.title}"`);
 }
+// Abre o calendariozinho do input type=date em qualquer click no campo (nao so no icone)
+function openDatePicker(input){
+  if(!input) return;
+  if(typeof input.showPicker==='function'){
+    try{input.showPicker();}catch(e){/* alguns browsers exigem user gesture; ignora */}
+  }
+}
 function showAccessManager(projId){
   const proj=state.projects.find(p=>p.id===projId);
   if(!proj){showToast('Projeto não encontrado');return;}
@@ -2822,8 +2829,8 @@ function renderPhase(proj,ph){
         <div class="add-task-inputs" id="atf-${esc(ph.id)}">
           <input class="inp-id" placeholder="ID" id="at-id-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
           <input class="inp-title" placeholder="Título *" id="at-title-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
-          <input class="inp-start" type="date" id="at-start-${esc(ph.id)}" title="Data de início prevista">
-          <input class="inp-due" type="date" id="at-due-${esc(ph.id)}" title="Prazo (data de fim)">
+          <input class="inp-start" type="date" id="at-start-${esc(ph.id)}" onclick="openDatePicker(this)" title="Data de início prevista">
+          <input class="inp-due" type="date" id="at-due-${esc(ph.id)}" onclick="openDatePicker(this)" title="Prazo (data de fim)">
           <input class="inp-deps" placeholder="Deps" id="at-deps-${esc(ph.id)}">
           <input class="inp-notes" placeholder="Notas" id="at-notes-${esc(ph.id)}">
           <button class="btn primary" onclick="submitAddTask('${esc(ph.id)}')">OK</button>
@@ -2856,7 +2863,7 @@ function renderTaskRow(proj,ph,t){
       <button class="hours-chip ${hCls}" onclick="onHoursChipClick(event,'${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="Clique: apontar · Shift+clique: estimar">${hLbl}</button>
       <button class="timer-btn-mini ${isRunning?'running':''}" onclick="event.stopPropagation();toggleTimer('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="${isRunning?'Parar':'Iniciar'} cronômetro">${isRunning?'■':'▶'}</button>
     </div>
-    <div class="col-due" onclick="event.stopPropagation()"><input type="date" class="due-input ${dc}" value="${esc(t.dueDate||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}','dueDate',this.value);render()"></div>
+    <div class="col-due" onclick="event.stopPropagation()"><input type="date" class="due-input ${dc}" value="${esc(t.dueDate||'')}" onclick="event.stopPropagation();openDatePicker(this)" onchange="updateTaskField('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}','dueDate',this.value)" onblur="render()"></div>
     <div class="col-resp" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:2px">${state.team.members.length?`<select onchange="onAssigneeChange('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}',this)" style="border:none;background:transparent;font-size:11px;flex:1;min-width:0;padding:0"><option value="">— sem —</option>${state.team.members.map(x=>`<option value="${esc(x.email)}" ${(t.assigneeEmail||'').toLowerCase()===x.email.toLowerCase()?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:respHtml}${!t.assigneeEmail&&state.currentUserEmail&&memberByEmail(state.currentUserEmail)?`<button class="claim-task-btn" onclick="event.stopPropagation();claimTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="Assumir esta atividade pra você">✋ Pegar</button>`:''}</div>
     <div class="col-del" onclick="event.stopPropagation()"><button onclick="deleteTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')">✕</button></div>
   </div>`;
@@ -2911,16 +2918,16 @@ function renderTaskDetailPane(){
       <div class="td-section">
         <h4>Datas &amp; Progresso</h4>
         <div class="td-prog-row">
-          <label>Data início (prevista)</label>
-          <input type="date" value="${esc(task.startDate||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','startDate',this.value);render()">
+          <label>📅 Data início (prevista)</label>
+          <input type="date" value="${esc(task.startDate||'')}" onclick="openDatePicker(this)" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','startDate',this.value)" onblur="render()">
         </div>
         <div class="td-prog-row">
-          <label>Prazo (data de fim)</label>
-          <input type="date" value="${esc(task.dueDate||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','dueDate',this.value);render()">
+          <label>📅 Prazo (data de fim)</label>
+          <input type="date" value="${esc(task.dueDate||'')}" onclick="openDatePicker(this)" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','dueDate',this.value)" onblur="render()">
         </div>
         <div class="td-prog-row">
-          <label>Data de conclusão (real)</label>
-          <input type="date" value="${esc(task.completedAt||'')}" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','completedAt',this.value);render()" title="${task.completedAt?'Preenchida automaticamente quando o status virou concluído. Edite se executou em outra data.':'Preenche sozinho quando você marcar como concluído.'}">
+          <label>✅ Data de conclusão (real)</label>
+          <input type="date" value="${esc(task.completedAt||'')}" onclick="openDatePicker(this)" onchange="updateTaskField('${esc(proj.id)}','${esc(phase.id)}','${esc(task.id)}','completedAt',this.value)" onblur="render()" title="${task.completedAt?'Preenchida automaticamente quando o status virou concluído. Edite se executou em outra data.':'Preenche sozinho quando você marcar como concluído.'}">
         </div>
         <div class="td-prog-row td-prog-pct">
           <label>% Executado</label>
