@@ -206,60 +206,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 /* Botao Pegar atividade (orphan task) */
 .claim-task-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;background:var(--amber-bg);color:var(--amber);font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:var(--sans);transition:filter .15s;margin-left:3px;white-space:nowrap;line-height:1.4}
 .claim-task-btn:hover{filter:brightness(.95)}
-/* Toggle Faturável / Cortesia */
-.bill-toggle{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:var(--sans);transition:filter .15s,transform .1s;line-height:1.4}
-.bill-toggle:hover{filter:brightness(.95)}
-.bill-toggle:active{transform:translateY(1px)}
-.bill-toggle.on{background:var(--green-bg);color:var(--green)}
-.bill-toggle.off{background:var(--purple-bg);color:var(--purple)}
-.bill-toggle.bank{background:var(--teal-bg);color:var(--teal)}
-.bill-toggle.extra{background:var(--green-bg);color:var(--green)}
-.bill-toggle.courtesy{background:var(--purple-bg);color:var(--purple)}
-/* Editor de cliente */
-.client-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;background:var(--bg);margin-bottom:5px;border:1px solid var(--border);transition:background .15s}
-.client-row:hover{background:var(--bg3)}
-.bill-badge{font-size:9px;font-weight:700;padding:1px 7px;border-radius:100px;display:inline-block}
-.ec-row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:12px}
-.ec-row label{color:var(--txt3);min-width:160px;font-size:11px;flex-shrink:0}
-.ec-row input,.ec-row textarea{flex:1;min-width:0;padding:6px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-size:12px;color:var(--txt);font-family:inherit}
-.ec-row input:focus,.ec-row textarea:focus{outline:2px solid var(--acc);outline-offset:-1px}
-.ec-types{display:flex;flex-direction:column;gap:6px;margin:4px 0 12px}
-.ec-type{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;transition:all .15s}
-.ec-type:hover{border-color:var(--border2)}
-.ec-type.sel{border-color:var(--acc);background:var(--acc-bg)}
-.ec-type input[type=radio]{width:16px;height:16px;flex:0 0 16px;padding:0;margin-top:2px;accent-color:var(--acc);background:transparent;border-radius:0}
-.ec-type .ttl{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:2px}
-.ec-type .ds{font-size:10px;color:var(--txt2);line-height:1.4}
-/* Faturamento */
-.fatur-wrap{padding:8px 4px}
-.fatur-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px}
-.fatur-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-.fatur-hdr h3{font-size:15px;font-weight:700;margin:0;flex:1}
-.fatur-hdr .icon-btn{background:transparent;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:6px}
-.fatur-hdr .icon-btn:hover{background:var(--bg3);color:var(--txt)}
-.fatur-main{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.fatur-balance,.fatur-month{background:var(--bg);border-radius:10px;padding:12px 14px;border:1px solid var(--border)}
-.fatur-balance .lbl,.fatur-month .lbl{font-size:9px;text-transform:uppercase;color:var(--txt3);font-weight:700;letter-spacing:.06em;margin-bottom:4px}
-.fatur-balance .val,.fatur-month .val{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:var(--mono);color:var(--txt);line-height:1.1}
-.fatur-balance.good .val{color:var(--green)}
-.fatur-balance.bad .val{color:var(--red)}
-.fatur-balance.warn .val{color:var(--amber)}
-.fatur-balance .sub-lbl,.fatur-month .sub-lbl{font-size:10px;color:var(--txt3);margin-top:4px}
-.fatur-month .sub-lbl.bad{color:var(--red);font-weight:600}
-.fatur-balance .dim,.fatur-month .dim{color:var(--txt3);font-size:14px;font-weight:500}
-.progress-mini{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px}
-.progress-mini-fill{height:100%;background:var(--acc);transition:width .3s}
-.progress-mini-fill.over{background:var(--red)}
-.fatur-meta{font-size:11px;color:var(--txt2);margin-bottom:8px;padding:6px 10px;background:var(--bg3);border-radius:6px}
-.fatur-projects{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
-.fatur-pgroup{flex:1;min-width:180px}
-.fatur-pgroup .g-lbl{font-size:9px;text-transform:uppercase;color:var(--txt3);font-weight:700;letter-spacing:.06em;margin-bottom:5px}
-.fatur-plink{display:block;font-size:11px;padding:4px 8px;border-radius:5px;background:var(--bg3);color:var(--txt2);margin-bottom:3px;cursor:pointer;text-decoration:none;transition:background .15s}
-.fatur-plink:hover{background:var(--bg4);color:var(--txt)}
-.fatur-plink.courtesy{font-style:italic;color:var(--txt3)}
-.fatur-notes{font-size:11px;color:var(--txt2);margin-top:10px;padding:8px 12px;background:var(--bg);border-left:3px solid var(--acc);border-radius:6px;line-height:1.5}
-.fatur-extra{font-size:11px;color:var(--green);margin:8px 0;padding:7px 12px;background:var(--green-bg);border-radius:6px;font-weight:500}
-.fatur-extra b{font-family:var(--mono);font-weight:700}
 /* Modal de acesso */
 .acc-opt{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;margin-bottom:8px;transition:all .15s}
 .acc-opt:hover{border-color:var(--border2)}
@@ -887,7 +833,7 @@ const KANBAN_COLS = [
 
 const BPM_TEMPLATE = {
   id:'__template__',name:'Template BPM',client:'',type:'bpm',isTemplate:true,
-  visibility:'public',members:[],createdBy:'',billable:true,billingMode:'bank',
+  visibility:'public',members:[],createdBy:'',
   phases:[
     {id:'fase1',name:'Fase 1',tasks:[
       {id:'a1',title:'Atividade 1',status:'PENDENTE',assignee:'',notes:'',dueDate:'',deps:[]},
@@ -1016,14 +962,6 @@ function migrateProject(p){
   if(p.visibility===undefined){p.visibility='public';changed=true;}
   if(!Array.isArray(p.members)){p.members=[];changed=true;}
   if(p.createdBy===undefined){p.createdBy='';changed=true;}
-  // Faturamento: billingMode é source-of-truth ('bank' | 'extra' | 'courtesy').
-  // Migra `billable` legado: true → 'bank' (default conservador); false → 'courtesy'.
-  if(p.billingMode===undefined){
-    if(p.billable===false) p.billingMode='courtesy';
-    else p.billingMode='bank';
-    changed=true;
-  }
-  if(p.billable===undefined){p.billable=p.billingMode!=='courtesy';changed=true;}
   (p.phases||[]).forEach(ph=>{
     (ph.tasks||[]).forEach(t=>{
       if(!Array.isArray(t.deps)){t.deps=[];changed=true;}
@@ -1059,21 +997,6 @@ function migrateTeam(team){
     if(!m.role) m.role=team.admins.includes((m.email||'').toLowerCase())?'admin':'member';
   });
   return team;
-}
-// Faturamento: enriquece cada cliente com campos de billing. Retorna true se algo mudou.
-function migrateClients(clients){
-  if(!Array.isArray(clients)) return false;
-  let changed=false;
-  clients.forEach(c=>{
-    if(c.billingType===undefined){c.billingType='hourly';changed=true;} // default neutro = "por hora", retrocompat
-    if(c.monthlyHours===undefined){c.monthlyHours=0;changed=true;}
-    if(c.hourlyRate===undefined){c.hourlyRate=0;changed=true;}
-    if(c.monthlyFee===undefined){c.monthlyFee=0;changed=true;}
-    if(c.contractStart===undefined){c.contractStart='';changed=true;}
-    if(c.initialBalance===undefined){c.initialBalance=0;changed=true;}
-    if(c.notes===undefined){c.notes='';changed=true;}
-  });
-  return changed;
 }
 
 // ═══ CACHE ═══
@@ -1234,16 +1157,11 @@ async function initApp(background=false){
     if(state.fileMap['clients.json']){
       try{const cl=await readFile(state.fileMap['clients.json']);state.clients=cl.clients||[];}catch(e){state.clients=[];}
     } else {state.clients=[];}
-    // Migra clients (adiciona campos de billing se ausentes). Persiste em background se mudou.
-    if(migrateClients(state.clients)){
-      addLog(`Atualizando schema de clientes...`);
-      saveClients().then(()=>addLog('✓ Schema de clientes atualizado')).catch(e=>console.warn('Migrate clients fail',e));
-    }
     if(state.fileMap['team.json']){
       try{const tm=await readFile(state.fileMap['team.json']);state.team=migrateTeam(tm);}catch(e){state.team=migrateTeam({});}
     } else {state.team=migrateTeam({});}
     applyCurrentUserUI();
-    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json');
+    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&n!=='clients.json'&&n!=='team.json');
     addLog(`Carregando ${pFiles.length} projeto(s)...`);
     // Lê cada projeto, salva SNAPSHOT do JSON cru antes de migrar (pra eventual rollback de dados)
     const rawAndFlags=await Promise.all(pFiles.map(async fname=>{
@@ -2174,119 +2092,36 @@ async function saveClients(){
   if(state.fileMap['clients.json']) await updateDriveFile(state.fileMap['clients.json'],data);
   else{const f=await createDriveFile(state.folderId,'clients.json',data);state.fileMap['clients.json']=f.id;}
 }
-const BILLING_LABELS={hour_bank:'🏦 Banco de horas',hourly:'⏱ Por hora',fixed:'📌 Fixo (mensalidade)'};
-const BILLING_COLORS={hour_bank:{bg:'var(--teal-bg)',fg:'var(--teal)'},hourly:{bg:'var(--acc-bg)',fg:'var(--acc)'},fixed:{bg:'var(--purple-bg)',fg:'var(--purple)'}};
 function showClientsManager(){
-  const buildList=()=>`
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Click no cliente para configurar tipo de cobrança, valores e saldo.</div>
-    <div style="max-height:340px;overflow-y:auto;margin-bottom:10px">
+  const buildHtml=()=>`
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Cadastre clientes para usar nas listas, filtros e relatórios consolidados.</div>
+    <div style="max-height:280px;overflow-y:auto;margin-bottom:10px">
       ${state.clients.length===0?'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:14px">Nenhum cliente</div>':
-        state.clients.map(c=>{
-          const lbl=BILLING_LABELS[c.billingType]||BILLING_LABELS.hourly;
-          const col=BILLING_COLORS[c.billingType]||BILLING_COLORS.hourly;
-          const extra=c.billingType==='hour_bank'?`${c.monthlyHours||0}h/mês`:c.billingType==='fixed'?`R$ ${(c.monthlyFee||0).toLocaleString('pt-BR')}/mês`:c.hourlyRate?`R$ ${c.hourlyRate}/h`:'';
-          return `<div class="client-row" onclick="editClientFull('${esc(c.id)}')">
-            <span style="font-size:16px">📁</span>
-            <div style="flex:1;min-width:0">
-              <div class="tm-name" style="margin-bottom:2px">${esc(c.name)}</div>
-              <div style="font-size:10px;color:var(--txt3);display:flex;gap:8px"><span class="bill-badge" style="background:${col.bg};color:${col.fg}">${lbl}</span>${extra?`<span style="font-family:var(--mono)">${esc(extra)}</span>`:''}</div>
-            </div>
-            <button onclick="event.stopPropagation();removeClient('${esc(c.id)}')" style="background:transparent;color:var(--txt3);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:12px" title="Remover">✕</button>
-          </div>`;
-        }).join('')}
+        state.clients.map(c=>`
+          <div class="mgr-row">
+            <span style="font-size:14px">📁</span>
+            <span class="tm-name">${esc(c.name)}</span>
+            <button onclick="removeClient('${esc(c.id)}')" style="background:transparent;color:var(--txt3);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:12px">✕</button>
+          </div>`).join('')}
     </div>
-    <div style="display:flex;gap:6px;border-top:1px solid var(--border);padding-top:10px">
-      <input id="new-client-name" placeholder="Nome do novo cliente" maxlength="60" style="flex:1;background:var(--bg3)" onkeydown="if(event.key==='Enter') addClient()">
+    <div style="display:flex;gap:6px">
+      <input id="new-client-name" placeholder="Nome do cliente" maxlength="60" style="flex:1;background:var(--bg3)" onkeydown="if(event.key==='Enter') addClient()">
       <button class="modal-btn primary" onclick="addClient()" style="padding:7px 14px">+</button>
     </div>`;
   const overlay=document.createElement('div');
   overlay.className='modal-overlay open';overlay.id='clients-overlay';overlay.style.zIndex='250';
-  overlay.innerHTML=`<div class="modal" style="max-width:480px">
+  overlay.innerHTML=`<div class="modal" style="max-width:420px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3>📁 Clientes</h3>
+      <h3>Clientes</h3>
       <button class="icon-x" onclick="document.getElementById('clients-overlay').remove()">✕</button>
     </div>
-    <div id="clients-list-wrap">${buildList()}</div>
+    <div id="clients-list-wrap">${buildHtml()}</div>
   </div>`;
   overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
   document.body.appendChild(overlay);
   document.getElementById('new-client-name')?.focus();
-  window._refreshClientsUI=()=>{const w=document.getElementById('clients-list-wrap');if(w) w.innerHTML=buildList();document.getElementById('new-client-name')?.focus();};
+  window._refreshClientsUI=()=>{const w=document.getElementById('clients-list-wrap');if(w) w.innerHTML=buildHtml();document.getElementById('new-client-name')?.focus();};
 }
-window.editClientFull=function(id){
-  const c=state.clients.find(x=>x.id===id);if(!c) return;
-  // garante campos preenchidos (cliente pode ter sido criado antes da migração)
-  if(c.billingType===undefined) c.billingType='hourly';
-  if(c.monthlyHours===undefined) c.monthlyHours=0;
-  if(c.hourlyRate===undefined) c.hourlyRate=0;
-  if(c.monthlyFee===undefined) c.monthlyFee=0;
-  if(c.contractStart===undefined) c.contractStart='';
-  if(c.initialBalance===undefined) c.initialBalance=0;
-  if(c.notes===undefined) c.notes='';
-  const draft={...c};
-  const buildBody=()=>{
-    const t=draft.billingType||'hourly';
-    return `
-      <div class="ec-row"><label>Nome</label><input id="ec-name" value="${esc(draft.name)}" maxlength="60"></div>
-      <div class="ec-row"><label>Tipo de cobrança</label></div>
-      <div class="ec-types">
-        <label class="ec-type ${t==='hour_bank'?'sel':''}"><input type="radio" name="bt" value="hour_bank" ${t==='hour_bank'?'checked':''} onchange="window._ecSetType('hour_bank')"><div><div class="ttl">🏦 Banco de horas</div><div class="ds">Contrato em horas/mês. Saldo acumula entre meses (positivo ou negativo).</div></div></label>
-        <label class="ec-type ${t==='hourly'?'sel':''}"><input type="radio" name="bt" value="hourly" ${t==='hourly'?'checked':''} onchange="window._ecSetType('hourly')"><div><div class="ttl">⏱ Por hora</div><div class="ds">Cobra cada hora apontada × valor/hora. Sem saldo, sem teto.</div></div></label>
-        <label class="ec-type ${t==='fixed'?'sel':''}"><input type="radio" name="bt" value="fixed" ${t==='fixed'?'checked':''} onchange="window._ecSetType('fixed')"><div><div class="ttl">📌 Fixo (mensalidade)</div><div class="ds">Valor fixo mensal. Use horas pra controlar margem interna.</div></div></label>
-      </div>
-      ${t==='hour_bank'?`
-      <div class="ec-row"><label>Horas/mês contratadas</label><input id="ec-mh" type="number" min="0" step="0.5" value="${draft.monthlyHours||0}"></div>
-      <div class="ec-row"><label>Saldo inicial (h)</label><input id="ec-ib" type="number" step="0.5" value="${draft.initialBalance||0}" title="Saldo de partida (positivo: a favor do cliente; negativo: cliente devendo)"></div>
-      <div class="ec-row"><label>Início do contrato</label><input id="ec-cs" type="date" value="${esc(draft.contractStart||'')}" onclick="openDatePicker(this)"></div>
-      <div class="ec-row"><label>Valor/hora (R$)</label><input id="ec-hr" type="number" min="0" step="0.01" value="${draft.hourlyRate||0}" title="Pra cálculo de receita equivalente e margem interna"></div>
-      `:''}
-      ${t==='hourly'?`
-      <div class="ec-row"><label>Valor/hora (R$)</label><input id="ec-hr" type="number" min="0" step="0.01" value="${draft.hourlyRate||0}"></div>
-      `:''}
-      ${t==='fixed'?`
-      <div class="ec-row"><label>Valor mensal (R$)</label><input id="ec-mf" type="number" min="0" step="0.01" value="${draft.monthlyFee||0}"></div>
-      <div class="ec-row"><label>Horas esperadas/mês</label><input id="ec-mh" type="number" min="0" step="0.5" value="${draft.monthlyHours||0}" title="Estimativa interna pra calcular margem (não cobra a mais)"></div>
-      <div class="ec-row"><label>Início do contrato</label><input id="ec-cs" type="date" value="${esc(draft.contractStart||'')}" onclick="openDatePicker(this)"></div>
-      <div class="ec-row"><label>Custo/hora interno (R$)</label><input id="ec-hr" type="number" min="0" step="0.01" value="${draft.hourlyRate||0}" title="Pra calcular margem: receita fixa - (horas × custo)"></div>
-      `:''}
-      <div class="ec-row"><label>Notas</label><textarea id="ec-notes" rows="2" style="resize:vertical">${esc(draft.notes||'')}</textarea></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-        <button class="btn" onclick="document.getElementById('editclient-overlay').remove()">Cancelar</button>
-        <button class="btn primary" onclick="window._ecSave()">Salvar</button>
-      </div>`;
-  };
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open';overlay.id='editclient-overlay';overlay.style.zIndex='260';
-  overlay.innerHTML=`<div class="modal" style="max-width:520px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3>📁 ${esc(c.name)}</h3>
-      <button class="icon-x" onclick="document.getElementById('editclient-overlay').remove()">✕</button>
-    </div>
-    <div id="ec-body">${buildBody()}</div>
-  </div>`;
-  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
-  document.body.appendChild(overlay);
-  const refresh=()=>{const w=document.getElementById('ec-body');if(w) w.innerHTML=buildBody();};
-  // captura os inputs antes de re-render pra preservar valores transientes
-  const grab=()=>{
-    const nm=document.getElementById('ec-name');if(nm) draft.name=nm.value.trim();
-    const mh=document.getElementById('ec-mh');if(mh) draft.monthlyHours=Number(mh.value)||0;
-    const ib=document.getElementById('ec-ib');if(ib) draft.initialBalance=Number(ib.value)||0;
-    const cs=document.getElementById('ec-cs');if(cs) draft.contractStart=cs.value||'';
-    const hr=document.getElementById('ec-hr');if(hr) draft.hourlyRate=Number(hr.value)||0;
-    const mf=document.getElementById('ec-mf');if(mf) draft.monthlyFee=Number(mf.value)||0;
-    const nt=document.getElementById('ec-notes');if(nt) draft.notes=nt.value;
-  };
-  window._ecSetType=v=>{grab();draft.billingType=v;refresh();};
-  window._ecSave=async ()=>{
-    grab();
-    if(!draft.name){showToast('Nome é obrigatório');return;}
-    Object.assign(c,draft);
-    document.getElementById('editclient-overlay').remove();
-    try{await saveClients();if(window._refreshClientsUI) window._refreshClientsUI();render();showToast(`"${c.name}" salvo`);}
-    catch(e){showToast('Erro: '+e.message,3000);}
-  };
-};
 window.addClient=async function(){
   const inp=document.getElementById('new-client-name');const name=inp?.value?.trim();if(!name) return;
   if(state.clients.some(c=>c.name.toLowerCase()===name.toLowerCase())){showToast('Cliente já existe');return;}
@@ -2302,33 +2137,6 @@ window.removeClient=async function(id){
 
 // ═══ TEAM MANAGER ═══
 async function saveTeam(){
-  // Backup automático: antes de cada save, guarda a versão anterior em team_backup_*.json
-  // (idempotente em ciclo curto: só faz backup se passou > 5 min do último, pra não floodar Drive)
-  try{
-    const lastBak=Object.keys(state.fileMap).filter(n=>n.startsWith('team_backup_')).sort().pop();
-    const now=Date.now();
-    const lastTs=lastBak?Number(lastBak.match(/team_backup_(\d+)/)?.[1]||0):0;
-    if(now-lastTs>5*60*1000 && state.fileMap['team.json']){
-      // Lê o que tá no Drive AGORA (antes de sobrescrever) e salva como backup
-      try{
-        const current=await readFile(state.fileMap['team.json']);
-        const bakName=`team_backup_${now}.json`;
-        const f=await createDriveFile(state.folderId,bakName,{savedAt:new Date().toISOString(),previousState:current});
-        state.fileMap[bakName]=f.id;
-        console.log('[team] backup criado:',bakName);
-      }catch(e){console.warn('[team] backup falhou (seguindo):',e);}
-    }
-  }catch(e){console.warn('[team] backup outer error:',e);}
-  // Sanity check: se vai salvar com 0 ou 1 membro mas o cache tem mais, alerta
-  const prevMembers=loadCache()?.team?.members?.length||0;
-  const newMembers=(state.team.members||[]).length;
-  if(newMembers<prevMembers && newMembers<=1 && prevMembers>=2){
-    const ok=confirm(`⚠ ATENÇÃO: você está prestes a salvar a equipe com ${newMembers} membro(s), mas o cache anterior tinha ${prevMembers}.\n\nIsto vai sobrescrever o team.json no Drive. Tem certeza?\n\nCancelar = não salva.`);
-    if(!ok){
-      console.log('[team] save cancelado pelo usuário');
-      throw new Error('Save cancelado: redução suspeita de membros');
-    }
-  }
   if(state.fileMap['team.json']) await updateDriveFile(state.fileMap['team.json'],state.team);
   else{const f=await createDriveFile(state.folderId,'team.json',state.team);state.fileMap['team.json']=f.id;}
   saveCache();
@@ -2387,7 +2195,6 @@ window.addMember=async function(){
 };
 window.removeMember=async function(id){
   const m=state.team.members.find(x=>x.id===id);if(!m) return;
-  if(!confirm(`Remover "${m.name||m.email}" da equipe?\n\nEle perderá acesso aos projetos onde estava atribuído como responsável (as tasks ficarão sem dono, mas podem ser reatribuídas).`)){return;}
   state.team.members=state.team.members.filter(x=>x.id!==id);
   state.team.admins=state.team.admins.filter(e=>e.toLowerCase()!==(m.email||'').toLowerCase());
   if(state.team.admins.length===0) state.team.admins=[DEFAULT_ADMIN_EMAIL];
@@ -2560,11 +2367,7 @@ async function createProject(){
   const client=document.getElementById('new-client-select').value||'';
   const type=document.getElementById('new-type-select').value||'projeto';
   const id='proj_'+Date.now();
-  // Default contextual do billingMode com base no tipo de cobrança do cliente
-  const clientObj=state.clients.find(c=>(c.name||'').toLowerCase()===(client||'').toLowerCase());
-  const cBillType=clientObj?.billingType||'hourly';
-  const defaultMode=cBillType==='hourly'?'extra':'bank'; // hour_bank e fixed → bank; hourly → extra
-  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,visibility:'public',members:[],createdBy:(state.currentUserEmail||'').toLowerCase(),billable:true,billingMode:defaultMode,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,visibility:'public',members:[],createdBy:(state.currentUserEmail||'').toLowerCase(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   migrateProject(proj);
   state.projects.push(proj);
   hideNewProjectForm();
@@ -2601,28 +2404,6 @@ function editProjectClient(){
 function editProjectType(value){
   const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
   proj.type=value;proj.updatedAt=new Date().toISOString();scheduleSave(proj);
-}
-// Faturamento: 3 modos por projeto
-const BILLING_MODE_META={
-  bank:{label:'🏦 Banco',cls:'bank',tip:'Consome o saldo do banco de horas do cliente'},
-  extra:{label:'💵 Extra',cls:'extra',tip:'Cobrado à parte (horas × valor/h). Não consome banco.'},
-  courtesy:{label:'🎁 Cortesia',cls:'courtesy',tip:'Não cobra nada e não consome banco. Só registro interno.'}
-};
-function renderBillingModePill(proj){
-  const mode=proj.billingMode||'bank';
-  const meta=BILLING_MODE_META[mode]||BILLING_MODE_META.bank;
-  return `<button class="bill-toggle ${meta.cls}" onclick="cycleProjectBillingMode('${esc(proj.id)}')" title="${esc(meta.tip)} · Clique pra alternar.">${meta.label}</button>`;
-}
-function cycleProjectBillingMode(projId){
-  const proj=state.projects.find(p=>p.id===projId);if(!proj) return;
-  const order=['bank','extra','courtesy'];
-  const cur=proj.billingMode||'bank';
-  const next=order[(order.indexOf(cur)+1)%order.length];
-  proj.billingMode=next;
-  proj.billable=next!=='courtesy'; // mantém compat
-  proj.updatedAt=new Date().toISOString();
-  scheduleSave(proj);render();
-  showToast(`Cobrança: ${BILLING_MODE_META[next].label}`);
 }
 
 // ═══ PHASE CRUD ═══
@@ -2761,14 +2542,10 @@ const NAV=[
   {id:'projetos',label:'Projetos',ico:'▤'},
   {id:'kanban',label:'Kanban',ico:'▥'},
   {id:'apontamentos',label:'Apontamentos',ico:'⏱'},
-  {id:'faturamento',label:'Faturamento',ico:'💰'},
   {id:'relatorios',label:'Relatórios',ico:'◉'},
 ];
-// Páginas restritas a admins (informação financeira sensível)
-const ADMIN_ONLY_PAGES=new Set(['faturamento']);
 function renderTabs(){
-  const isAdmin=currentUserIsAdmin();
-  document.getElementById('seg-tabs').innerHTML=NAV.filter(n=>!ADMIN_ONLY_PAGES.has(n.id)||isAdmin).map(n=>`
+  document.getElementById('seg-tabs').innerHTML=NAV.map(n=>`
     <a href="#${n.id}" class="seg ${state.currentPage===n.id?'active':''}">
       <span style="font-size:11px">${n.ico}</span>
       <span class="label-full">${n.label}</span>
@@ -2777,20 +2554,13 @@ function renderTabs(){
 }
 
 function render(){
-  let page=state.currentPage||'foco';
-  // Gate de acesso: páginas admin-only redirecionam pra Foco se usuário não for admin
-  if(ADMIN_ONLY_PAGES.has(page)&&!currentUserIsAdmin()){
-    showToast('Acesso restrito — apenas administradores',3000);
-    state.currentPage='foco';page='foco';
-    try{location.hash='foco';}catch(e){}
-  }
+  const page=state.currentPage||'foco';
   renderTabs();updateDrawerStats();updateTimerUI();
   const root=document.getElementById('route-content');
   if(page==='foco') root.innerHTML=renderFoco();
   else if(page==='projetos') root.innerHTML=renderProjetosPage();
   else if(page==='kanban') root.innerHTML=renderKanbanPage();
   else if(page==='apontamentos') root.innerHTML=renderApontamentosPage();
-  else if(page==='faturamento') root.innerHTML=renderFaturamentoPage();
   else if(page==='relatorios') root.innerHTML=renderRelatoriosPage();
   else root.innerHTML=renderFoco();
 }
@@ -2995,8 +2765,6 @@ function renderProjectDetailPane(proj){
         <span>Cliente · <b style="cursor:pointer" onclick="editProjectClient()">${esc(proj.client||'+ definir')}</b></span>
         <span class="dot"></span>
         <span>Tipo · <select onchange="editProjectType(this.value)" style="font-weight:600"><option value="projeto" ${proj.type==='projeto'?'selected':''}>Projeto</option><option value="suporte" ${proj.type==='suporte'?'selected':''}>Suporte</option></select></span>
-        <span class="dot"></span>
-        <span>Cobrança · ${renderBillingModePill(proj)}</span>
         <span class="dot"></span>
         <span><b style="color:${colors[s.health]}">${healthLabel[s.health]}</b></span>
       </div>
@@ -3284,82 +3052,6 @@ function computeKanbanColumns(allTasks){
   return KANBAN_COLS.map(c=>({key:c.key,label:c.label,match:t=>c.statuses.includes(t.status),drop:{field:'status',value:c.dropStatus}}));
 }
 
-// ═══ ATIVIDADE AVULSA (atalho do Kanban) ═══
-function showAvulsaModal(){
-  if(!state.clients.length){showToast('Cadastre clientes primeiro (📁 no menu)',3500);return;}
-  const draft={clientId:state.clients[0].id,projectId:'',title:'',phaseId:''};
-  const buildBody=()=>{
-    const c=state.clients.find(x=>x.id===draft.clientId);
-    const clientName=c?c.name:'';
-    const projs=state.projects.filter(p=>isProjectVisible(p)&&(p.client||'').toLowerCase()===clientName.toLowerCase()&&!p.isTemplate);
-    if(draft.projectId&&!projs.some(p=>p.id===draft.projectId)) draft.projectId=projs[0]?.id||'';
-    if(!draft.projectId&&projs[0]) draft.projectId=projs[0].id;
-    const proj=projs.find(p=>p.id===draft.projectId);
-    const phases=proj?.phases||[];
-    if(draft.phaseId&&!phases.some(ph=>ph.id===draft.phaseId)) draft.phaseId='';
-    if(!draft.phaseId){
-      const av=phases.find(ph=>(ph.name||'').toLowerCase()==='avulsas');
-      draft.phaseId=av?av.id:(phases[0]?.id||'__new_avulsas__');
-    }
-    return `
-      <div class="ec-row"><label>Cliente</label>
-        <select id="avs-client" onchange="window._avsSet('clientId',this.value)">
-          ${state.clients.map(x=>`<option value="${esc(x.id)}" ${x.id===draft.clientId?'selected':''}>${esc(x.name)}</option>`).join('')}
-        </select>
-      </div>
-      <div class="ec-row"><label>Projeto</label>
-        ${projs.length?`<select id="avs-proj" onchange="window._avsSet('projectId',this.value)">
-          ${projs.map(p=>{const mode=p.billingMode||'bank';const meta=BILLING_MODE_META[mode]||BILLING_MODE_META.bank;return `<option value="${esc(p.id)}" ${p.id===draft.projectId?'selected':''}>${esc(p.name)} · ${meta.label}</option>`;}).join('')}
-        </select>`:`<span style="color:var(--txt3);font-size:11px;font-style:italic">Nenhum projeto pra ${esc(clientName)} ainda — crie um primeiro</span>`}
-      </div>
-      ${proj?`<div class="ec-row"><label>Fase</label>
-        <select id="avs-phase" onchange="window._avsSet('phaseId',this.value)">
-          ${phases.map(ph=>`<option value="${esc(ph.id)}" ${ph.id===draft.phaseId?'selected':''}>${esc(ph.name)}</option>`).join('')}
-          ${!phases.some(ph=>(ph.name||'').toLowerCase()==='avulsas')?`<option value="__new_avulsas__" ${draft.phaseId==='__new_avulsas__'?'selected':''}>➕ Criar fase "Avulsas"</option>`:''}
-        </select>
-      </div>`:''}
-      <div class="ec-row"><label>Título da atividade</label><input id="avs-title" placeholder="Ex: Reunião alinhamento mensal" value="${esc(draft.title)}" oninput="window._avsSet('title',this.value)"></div>
-      <div style="font-size:10px;color:var(--txt3);margin-top:6px;line-height:1.5">A atividade nasce ${proj?`no projeto <b>${esc(proj.name)}</b>`:''}, fase "${draft.phaseId==='__new_avulsas__'?'Avulsas (nova)':esc(phases.find(ph=>ph.id===draft.phaseId)?.name||'')}". Cobrança do projeto: <b>${proj?(BILLING_MODE_META[proj.billingMode||'bank']?.label||'-'):'-'}</b>.</div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-        <button class="btn" onclick="document.getElementById('avulsa-overlay').remove()">Cancelar</button>
-        <button class="btn primary" onclick="window._avsSubmit()" ${!proj?'disabled':''}>Criar</button>
-      </div>`;
-  };
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open';overlay.id='avulsa-overlay';overlay.style.zIndex='260';
-  overlay.innerHTML=`<div class="modal" style="max-width:480px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3>+ Atividade avulsa</h3>
-      <button class="icon-x" onclick="document.getElementById('avulsa-overlay').remove()">✕</button>
-    </div>
-    <div id="avs-body">${buildBody()}</div>
-  </div>`;
-  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
-  document.body.appendChild(overlay);
-  setTimeout(()=>document.getElementById('avs-title')?.focus(),50);
-  const refresh=()=>{const w=document.getElementById('avs-body');if(w) w.innerHTML=buildBody();setTimeout(()=>document.getElementById('avs-title')?.focus(),50);};
-  window._avsSet=(k,v)=>{draft[k]=v;if(k!=='title') refresh();};
-  window._avsSubmit=async()=>{
-    if(!draft.title.trim()){showToast('Informe o título');return;}
-    const proj=state.projects.find(p=>p.id===draft.projectId);
-    if(!proj){showToast('Selecione um projeto');return;}
-    let phase;
-    if(draft.phaseId==='__new_avulsas__'){
-      phase={id:'ph_'+Date.now(),name:'Avulsas',tasks:[]};
-      proj.phases=proj.phases||[];proj.phases.push(phase);
-    } else {
-      phase=proj.phases?.find(ph=>ph.id===draft.phaseId);
-      if(!phase){showToast('Fase inválida');return;}
-    }
-    const newTask={id:'t_'+Date.now(),title:draft.title.trim(),status:'PENDENTE',assignee:'',assigneeEmail:'',notes:'',dueDate:'',startDate:'',completedAt:'',percentComplete:0,deps:[],estimatedHours:0,timeEntries:[]};
-    phase.tasks=phase.tasks||[];phase.tasks.push(newTask);
-    proj.updatedAt=new Date().toISOString();
-    document.getElementById('avulsa-overlay').remove();
-    render();scheduleSave(proj);
-    showToast(`"${newTask.title}" criada em ${proj.name}`);
-  };
-}
-
 function renderKanbanPage(){
   const today=new Date().toISOString().slice(0,10);
   const q=(state.kanbanSearch||'').toLowerCase().trim();
@@ -3390,7 +3082,6 @@ function renderKanbanPage(){
       <div><h2>Kanban</h2><div class="sub">${allTasks.length} cards · agrupado por ${state.kanbanGroup}</div></div>
       <div class="pane-h-actions">
         <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer"><input type="checkbox" ${state.kanbanHideDone?'checked':''} onchange="state.kanbanHideDone=this.checked;render()" style="margin:0">Ocultar concluídos</label>
-        <button class="btn primary" onclick="showAvulsaModal()">+ Avulsa</button>
       </div>
     </div>
     <div class="pane-body" style="display:flex;flex-direction:column">
@@ -3559,210 +3250,6 @@ function renderApontamentosPage(){
   </div>`;
 }
 
-// ═══ FATURAMENTO PAGE ═══
-// Helpers de calculo
-function _faturStartOfMonth(d){return new Date(d.getFullYear(),d.getMonth(),1);}
-function _faturMonthsBetween(isoStart,now){
-  if(!isoStart) return 0;
-  const s=parseISODate(isoStart);if(!s) return 0;
-  return Math.max(0,(now.getFullYear()-s.getFullYear())*12+(now.getMonth()-s.getMonth())+1); // inclusivo
-}
-function _faturHoursForClient(clientName,fromIso,toIso,modeFilter){
-  // Soma horas de timeEntries dos projetos do cliente, filtrando por billingMode (opcional)
-  // modeFilter: 'bank' | 'extra' | 'courtesy' | null (todos billable)
-  let total=0;
-  state.projects.forEach(p=>{
-    if((p.client||'').toLowerCase()!==(clientName||'').toLowerCase()) return;
-    const mode=p.billingMode||(p.billable===false?'courtesy':'bank');
-    if(modeFilter){if(mode!==modeFilter) return;}
-    else if(mode==='courtesy') return; // sem filter explícito: ignora cortesia
-    (p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{
-      if(!e.date) return;
-      if(fromIso&&e.date<fromIso) return;
-      if(toIso&&e.date>toIso) return;
-      total+=Number(e.durationHours)||0;
-    })));
-  });
-  return total;
-}
-function _faturComputeClient(c,now){
-  const t=c.billingType||'hourly';
-  const isoToday=now.toISOString().slice(0,10);
-  const monthStart=_faturStartOfMonth(now).toISOString().slice(0,10);
-  const cs=c.contractStart||'';
-  // Horas separadas por modo (mes atual e total acumulado desde contractStart)
-  const bankMonth=_faturHoursForClient(c.name,monthStart,isoToday,'bank');
-  const bankTotal=_faturHoursForClient(c.name,cs,isoToday,'bank');
-  const extraMonth=_faturHoursForClient(c.name,monthStart,isoToday,'extra');
-  const extraTotal=_faturHoursForClient(c.name,cs,isoToday,'extra');
-  const courtesyMonth=_faturHoursForClient(c.name,monthStart,isoToday,'courtesy');
-  // Horas billable totais (banco + extra) — usado pra mostrar consumo
-  const hoursMonth=bankMonth+extraMonth;
-  const hoursTotal=bankTotal+extraTotal;
-  const out={type:t,hoursMonth,hoursTotal,monthlyHours:c.monthlyHours||0,hourlyRate:c.hourlyRate||0,
-             bankMonth,bankTotal,extraMonth,extraTotal,courtesyMonth};
-  // Receita extra = horas extra × rate (vale pra todos os tipos de cliente)
-  out.extraMonthRevenue=extraMonth*(c.hourlyRate||0);
-  out.extraTotalRevenue=extraTotal*(c.hourlyRate||0);
-  if(t==='hour_bank'){
-    const months=_faturMonthsBetween(cs,now);
-    const contracted=(c.monthlyHours||0)*months;
-    out.contractedTotal=contracted;
-    out.balance=(Number(c.initialBalance)||0)+contracted-bankTotal; // só banco consome saldo
-    out.monthsElapsed=months;
-    out.bankEquivalentRevenue=bankTotal*(c.hourlyRate||0);
-    // Receita do mes: extra (banco é contrato fixo, não cobra a mais)
-    out.monthRevenue=out.extraMonthRevenue;
-    out.totalRevenue=out.extraTotalRevenue;
-  } else if(t==='hourly'){
-    // Hourly: tudo billable cobra; banco não faz sentido mas se setado, soma também
-    out.monthRevenue=(bankMonth+extraMonth)*(c.hourlyRate||0);
-    out.totalRevenue=(bankTotal+extraTotal)*(c.hourlyRate||0);
-  } else if(t==='fixed'){
-    const months=Math.max(1,_faturMonthsBetween(cs,now));
-    // Receita fixa + extras
-    out.monthRevenue=(c.monthlyFee||0)+out.extraMonthRevenue;
-    out.totalRevenue=(c.monthlyFee||0)*months+out.extraTotalRevenue;
-    // Margem do mes: receita - (todas horas billable × custo interno)
-    out.monthCost=(bankMonth+extraMonth)*(c.hourlyRate||0);
-    out.monthMargin=out.monthRevenue-out.monthCost;
-    out.diffHours=bankMonth-(c.monthlyHours||0); // só banco conta pro "esperado" do contrato fixo
-  }
-  return out;
-}
-function _faturProjectsFor(clientName){
-  return state.projects.filter(p=>isProjectVisible(p)&&(p.client||'').toLowerCase()===(clientName||'').toLowerCase());
-}
-function renderFaturamentoPage(){
-  // Defesa em profundidade: mesmo se algo burlar o router/tabs, a página em si valida.
-  if(!currentUserIsAdmin()){
-    return `<div class="pane pane-mid"><div class="pane-body" style="padding:60px;text-align:center;color:var(--txt3)">
-      <div style="font-size:48px;margin-bottom:14px">🔒</div>
-      <div style="font-size:16px;font-weight:700;color:var(--txt);margin-bottom:6px">Acesso restrito</div>
-      <div style="font-size:12px;max-width:380px;margin:0 auto;line-height:1.6">Esta página mostra informações financeiras sensíveis (receita, contratos, margens). Apenas administradores podem visualizar. Se você precisa de acesso, peça pra um admin.</div>
-    </div></div>`;
-  }
-  const now=new Date();
-  const clients=state.clients.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const computed=clients.map(c=>({c,m:_faturComputeClient(c,now)}));
-  // KPIs gerais
-  const totalRevMonth=computed.reduce((s,x)=>s+(x.m.monthRevenue||0),0);
-  const totalRevTotal=computed.reduce((s,x)=>s+(x.m.totalRevenue||0),0);
-  const totalHoursMonth=computed.reduce((s,x)=>s+x.m.hoursMonth,0);
-  const banksAtRisk=computed.filter(x=>x.m.type==='hour_bank'&&x.m.balance<0).length;
-  return `<div class="pane pane-mid">
-    <div class="pane-h">
-      <div><h2>💰 Faturamento</h2><div class="sub">${clients.length} cliente${clients.length===1?'':'s'} · mês ${MONTHS_PT[now.getMonth()]}/${String(now.getFullYear()).slice(2)}</div></div>
-      <div class="pane-h-actions">
-        <button class="btn ghost" onclick="showClientsManager()">📁 Editar clientes</button>
-      </div>
-    </div>
-    <div class="pane-body">
-      <div class="fatur-wrap">
-        <div class="kpi-row" style="margin-bottom:18px">
-          <div class="kpi"><div class="l">Receita do mês</div><div class="v">R$ ${totalRevMonth.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div></div>
-          <div class="kpi"><div class="l">Horas faturáveis (mês)</div><div class="v">${formatHours(totalHoursMonth)}</div></div>
-          <div class="kpi purple"><div class="l">Receita acumulada</div><div class="v">R$ ${totalRevTotal.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div></div>
-          <div class="kpi ${banksAtRisk?'red':''}"><div class="l">Bancos no negativo</div><div class="v">${banksAtRisk}</div></div>
-        </div>
-        ${clients.length===0?'<div class="empty-state" style="text-align:center;padding:40px;color:var(--txt3)">Nenhum cliente cadastrado. Crie em 📁 Editar clientes.</div>':computed.map(x=>renderFaturClientCard(x.c,x.m)).join('')}
-      </div>
-    </div>
-  </div>`;
-}
-function renderFaturClientCard(c,m){
-  const projs=_faturProjectsFor(c.name);
-  const projsByMode={bank:[],extra:[],courtesy:[]};
-  projs.forEach(p=>{
-    const mode=p.billingMode||(p.billable===false?'courtesy':'bank');
-    (projsByMode[mode]||projsByMode.courtesy).push(p);
-  });
-  const lbl=BILLING_LABELS[m.type]||BILLING_LABELS.hourly;
-  const col=BILLING_COLORS[m.type]||BILLING_COLORS.hourly;
-  let mainBlock='';
-  if(m.type==='hour_bank'){
-    const bal=m.balance;
-    const bankUsedMonth=m.bankMonth,monthlyTarget=m.monthlyHours;
-    const monthPct=monthlyTarget>0?Math.min(100,bankUsedMonth/monthlyTarget*100):0;
-    const balClass=bal<0?'bad':bal<(monthlyTarget||0)*0.5?'warn':'good';
-    mainBlock=`
-      <div class="fatur-main">
-        <div class="fatur-balance ${balClass}">
-          <div class="lbl">🏦 Saldo do banco</div>
-          <div class="val">${bal>=0?'+':''}${formatHours(bal)}</div>
-          <div class="sub-lbl">${bal>=0?'horas a favor do cliente':'cliente devendo'} · ${m.monthsElapsed} mês(es) de contrato · só projetos 🏦 consomem</div>
-        </div>
-        <div class="fatur-month">
-          <div class="lbl">Banco · mês atual</div>
-          <div class="val">${formatHours(bankUsedMonth)} ${monthlyTarget?`<span class="dim">/ ${formatHours(monthlyTarget)}</span>`:''}</div>
-          <div class="progress-mini"><div class="progress-mini-fill ${monthPct>100?'over':''}" style="width:${Math.min(100,monthPct)}%"></div></div>
-        </div>
-      </div>
-      ${m.extraMonth>0?`<div class="fatur-extra">💵 Receita extra do mês: <b>R$ ${(m.extraMonthRevenue).toLocaleString('pt-BR',{maximumFractionDigits:0})}</b> · ${formatHours(m.extraMonth)} em projetos cobrados à parte</div>`:''}
-      <div class="fatur-meta">🏦 Banco consumido: ${formatHours(m.bankTotal)} de ${formatHours(m.contractedTotal)} contratadas${c.hourlyRate?` · Receita banco-equiv R$ ${(m.bankEquivalentRevenue||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}`:''}${m.extraTotal>0?` · 💵 Extra acumulado: ${formatHours(m.extraTotal)} (R$ ${(m.extraTotalRevenue).toLocaleString('pt-BR',{maximumFractionDigits:0})})`:''}${m.courtesyMonth>0?` · 🎁 Cortesia: ${formatHours(m.courtesyMonth)}`:''}</div>
-    `;
-  } else if(m.type==='hourly'){
-    mainBlock=`
-      <div class="fatur-main">
-        <div class="fatur-balance good">
-          <div class="lbl">💵 Receita do mês</div>
-          <div class="val">R$ ${(m.monthRevenue||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
-          <div class="sub-lbl">${formatHours(m.hoursMonth)} × R$ ${c.hourlyRate||0}/h</div>
-        </div>
-        <div class="fatur-month">
-          <div class="lbl">Acumulado</div>
-          <div class="val">R$ ${(m.totalRevenue||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
-          <div class="sub-lbl dim">${formatHours(m.hoursTotal)} apontadas no total</div>
-        </div>
-      </div>
-      ${m.courtesyMonth>0?`<div class="fatur-meta">🎁 Cortesia do mês: ${formatHours(m.courtesyMonth)} (não cobra)</div>`:''}
-    `;
-  } else if(m.type==='fixed'){
-    const marginClass=m.monthMargin>0?'good':m.monthMargin<0?'bad':'';
-    const overTime=m.diffHours>0;
-    mainBlock=`
-      <div class="fatur-main">
-        <div class="fatur-balance ${marginClass}">
-          <div class="lbl">Margem do mês</div>
-          <div class="val">R$ ${(m.monthMargin||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0})}</div>
-          <div class="sub-lbl">Receita R$ ${(m.monthRevenue||0).toLocaleString('pt-BR')} − custo R$ ${(m.monthCost||0).toLocaleString('pt-BR',{maximumFractionDigits:0})}</div>
-        </div>
-        <div class="fatur-month">
-          <div class="lbl">Banco · horas no mês</div>
-          <div class="val">${formatHours(m.bankMonth)} ${m.monthlyHours?`<span class="dim">/ ${formatHours(m.monthlyHours)} esperadas</span>`:''}</div>
-          ${overTime?`<div class="sub-lbl bad">⚠ ${formatHours(m.diffHours)} acima do esperado</div>`:''}
-        </div>
-      </div>
-      ${m.extraMonth>0?`<div class="fatur-extra">💵 Receita extra (fora do contrato): <b>R$ ${(m.extraMonthRevenue).toLocaleString('pt-BR',{maximumFractionDigits:0})}</b> · ${formatHours(m.extraMonth)}</div>`:''}
-    `;
-  }
-  const projsList=projs.length?`
-    <div class="fatur-projects">
-      ${projsByMode.bank.length?`<div class="fatur-pgroup">
-        <div class="g-lbl">🏦 Banco (${projsByMode.bank.length})</div>
-        ${projsByMode.bank.map(p=>`<a class="fatur-plink" onclick="selectProject('${esc(p.id)}')">${esc(p.name)}</a>`).join('')}
-      </div>`:''}
-      ${projsByMode.extra.length?`<div class="fatur-pgroup">
-        <div class="g-lbl">💵 Extra (${projsByMode.extra.length})</div>
-        ${projsByMode.extra.map(p=>`<a class="fatur-plink" onclick="selectProject('${esc(p.id)}')">${esc(p.name)}</a>`).join('')}
-      </div>`:''}
-      ${projsByMode.courtesy.length?`<div class="fatur-pgroup">
-        <div class="g-lbl">🎁 Cortesia (${projsByMode.courtesy.length})</div>
-        ${projsByMode.courtesy.map(p=>`<a class="fatur-plink courtesy" onclick="selectProject('${esc(p.id)}')">${esc(p.name)}</a>`).join('')}
-      </div>`:''}
-    </div>`:'<div class="fatur-meta" style="color:var(--txt3)">Nenhum projeto deste cliente ainda.</div>';
-  return `<div class="fatur-card">
-    <div class="fatur-hdr">
-      <h3>📁 ${esc(c.name)}</h3>
-      <span class="bill-badge" style="background:${col.bg};color:${col.fg}">${lbl}</span>
-      <button class="icon-btn" onclick="editClientFull('${esc(c.id)}')" title="Configurar cliente">⚙</button>
-    </div>
-    ${mainBlock}
-    ${projsList}
-    ${c.notes?`<div class="fatur-notes">📝 ${esc(c.notes)}</div>`:''}
-  </div>`;
-}
-
 // ═══ RELATÓRIOS PAGE ═══
 function renderRelatoriosPage(){
   const visibleProjects=state.projects.filter(isProjectVisible);
@@ -3867,15 +3354,7 @@ window.addEventListener('load',()=>{
   if(!checkConfig()){document.getElementById('setup-warning').style.display='block';const b=document.getElementById('btn-login');b.disabled=true;b.style.opacity='.5';b.style.cursor='not-allowed';return;}
   gapi.load('client',()=>{gapi.client.init({discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}).then(()=>{state.gapiReady=true;maybeInitGIS();});});
 });
-window.addEventListener('hashchange',()=>{
-  const h=location.hash.slice(1);
-  if(!h||!['foco','projetos','kanban','apontamentos','faturamento','relatorios'].includes(h)) return;
-  if(ADMIN_ONLY_PAGES.has(h)&&!currentUserIsAdmin()){
-    showToast('Acesso restrito — apenas administradores',3000);
-    location.hash='foco';return;
-  }
-  state.currentPage=h;render();
-});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&['foco','projetos','kanban','apontamentos','relatorios'].includes(h)){state.currentPage=h;render();}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     if(document.getElementById('ap-modal').classList.contains('open')){closeTimeEntryModal();return;}

@@ -15,7 +15,8 @@ Este documento descreve como **reverter** uma versão deployada caso ela quebre 
 1. Vá em https://github.com/AMdouradinho/gerenciador-projetos
 2. Abra a pasta `backup/`
 3. Escolha o snapshot que quer restaurar:
-   - **`index_v3_pre_status_report_2026-05-21.html`** → versão imediatamente anterior ao Status Report turbinado (Gantt, Curva S, % execução, datas). Ainda tem visibilidade por projeto, claim, fix de busca.
+   - **`index_v3_pre_faturamento_2026-05-21.html`** → 🆕 versão imediatamente anterior ao módulo Faturamento (banco de horas, billingMode, +Avulsa Kanban, proteções de team). Tem Status Report turbinado, datas/percentComplete, claim, visibilidade por projeto.
+   - **`index_v3_pre_status_report_2026-05-21.html`** → versão anterior ao Status Report turbinado. Tem visibilidade por projeto, claim, fix de busca.
    - **`index_legacy_2025-04-29.html`** → versão V1 original (29/abr/2026). Não recomendado pra rollback rápido, é o estado mais antigo.
 4. Click no arquivo → botão **Raw** → "Save as…" no seu computador (ou copie o conteúdo)
 5. Volte na raiz do repo, abra `index.html`, click no lápis ✎ para editar
