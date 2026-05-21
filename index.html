@@ -207,16 +207,21 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .claim-task-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;background:var(--amber-bg);color:var(--amber);font-size:10px;font-weight:700;cursor:pointer;border:none;font-family:var(--sans);transition:filter .15s;margin-left:3px;white-space:nowrap;line-height:1.4}
 .claim-task-btn:hover{filter:brightness(.95)}
 /* Modal de acesso */
-.acc-opt{display:flex;gap:10px;padding:11px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;margin-bottom:8px;transition:all .15s}
+.acc-opt{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;margin-bottom:8px;transition:all .15s}
 .acc-opt:hover{border-color:var(--border2)}
 .acc-opt.sel{border-color:var(--acc);background:var(--acc-bg)}
-.acc-opt input[type=radio]{margin-top:2px;accent-color:var(--acc)}
+/* Override do estilo global de input pra radios/checkboxes do modal */
+.acc-opt input[type=radio],.acc-mlist input[type=checkbox]{
+  width:16px;height:16px;flex:0 0 16px;padding:0;margin:0;background:transparent;border-radius:0;accent-color:var(--acc);cursor:pointer;font-size:0
+}
+.acc-opt input[type=radio]{margin-top:3px}
+.acc-opt > div{flex:1;min-width:0}
 .acc-opt .ttl{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:2px;display:flex;align-items:center;gap:6px}
 .acc-opt .ds{font-size:11px;color:var(--txt2);line-height:1.4}
-.acc-mlist{margin-top:8px;padding:8px;background:var(--bg2);border-radius:8px;max-height:200px;overflow-y:auto}
-.acc-mlist label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12px}
+.acc-mlist{margin-top:10px;padding:8px;background:var(--bg2);border-radius:8px;max-height:200px;overflow-y:auto;border:1px solid var(--border)}
+.acc-mlist label{display:flex;align-items:center;gap:9px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12px}
 .acc-mlist label:hover{background:var(--bg3)}
-.acc-mlist input[type=checkbox]{accent-color:var(--acc)}
+.acc-mlist label > span{display:inline-flex;align-items:center;gap:7px}
 
 .cl-footer{padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .cl-footer-btn{padding:8px;font-size:11px;border-radius:8px;background:var(--bg3);color:var(--txt2);font-weight:600;width:100%;display:flex;align-items:center;justify-content:center;gap:5px}
