@@ -2324,7 +2324,7 @@ function renderProjListPane(){
       <button class="icon-btn" onclick="state.projListFilter='all';state.projListSearch='';render()" title="Limpar filtros">↺</button>
     </div>
     <div class="cl-search">
-      <input placeholder="🔍 Buscar projeto..." value="${esc(state.projListSearch)}" oninput="state.projListSearch=this.value;render();document.querySelector('.cl-search input').focus()">
+      <input id="proj-search-input" placeholder="🔍 Buscar projeto..." value="${esc(state.projListSearch)}" oninput="state.projListSearch=this.value;const _p=this.selectionEnd;clearTimeout(window._plsT);window._plsT=setTimeout(()=>{render();const _i=document.getElementById('proj-search-input');if(_i){_i.focus();try{_i.setSelectionRange(_p,_p);}catch(e){}}},180)">
     </div>
     <div class="cl-filter">
       <button class="f-chip ${filter==='all'?'active':''}" onclick="state.projListFilter='all';render()">Todos<span class="cnt">${totalVisible}</span></button>
