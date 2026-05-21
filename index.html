@@ -192,6 +192,27 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .proj-tag.amber{background:var(--amber-bg);color:var(--amber)}
 .proj-list-empty{padding:24px;text-align:center;color:var(--txt3);font-size:11px}
 
+/* Pill de visibilidade no header do projeto */
+.vis-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;border:none;cursor:pointer;font-family:var(--sans);transition:filter .15s,transform .1s;letter-spacing:.02em;line-height:1.4}
+.vis-pill:hover{filter:brightness(.95)}
+.vis-pill:active{transform:translateY(1px)}
+.vis-pill.public{background:var(--green-bg);color:var(--green)}
+.vis-pill.restricted{background:var(--teal-bg);color:var(--teal)}
+.vis-pill.private{background:var(--gray-bg);color:var(--txt2)}
+.vis-pill.readonly{cursor:default}
+.vis-pill.readonly:hover{filter:none}
+/* Modal de acesso */
+.acc-opt{display:flex;gap:10px;padding:11px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;margin-bottom:8px;transition:all .15s}
+.acc-opt:hover{border-color:var(--border2)}
+.acc-opt.sel{border-color:var(--acc);background:var(--acc-bg)}
+.acc-opt input[type=radio]{margin-top:2px;accent-color:var(--acc)}
+.acc-opt .ttl{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.acc-opt .ds{font-size:11px;color:var(--txt2);line-height:1.4}
+.acc-mlist{margin-top:8px;padding:8px;background:var(--bg2);border-radius:8px;max-height:200px;overflow-y:auto}
+.acc-mlist label{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12px}
+.acc-mlist label:hover{background:var(--bg3)}
+.acc-mlist input[type=checkbox]{accent-color:var(--acc)}
+
 .cl-footer{padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .cl-footer-btn{padding:8px;font-size:11px;border-radius:8px;background:var(--bg3);color:var(--txt2);font-weight:600;width:100%;display:flex;align-items:center;justify-content:center;gap:5px}
 .cl-footer-btn:hover{background:var(--bg4);color:var(--txt)}
@@ -788,6 +809,7 @@ const KANBAN_COLS = [
 
 const BPM_TEMPLATE = {
   id:'__template__',name:'Template BPM',client:'',type:'bpm',isTemplate:true,
+  visibility:'public',members:[],createdBy:'',
   phases:[
     {id:'fase1',name:'Fase 1',tasks:[
       {id:'a1',title:'Atividade 1',status:'PENDENTE',assignee:'',notes:'',dueDate:'',deps:[]},
@@ -859,8 +881,29 @@ function memberByEmail(email){
 function taskActualHours(t){
   return (t.timeEntries||[]).reduce((s,e)=>s+(Number(e.durationHours)||0),0);
 }
+// Visibilidade no nível do PROJETO. Admin sempre vê tudo, criador sempre vê o próprio.
+// 'public' = todos da equipe; 'restricted' = somente emails em members; 'private' = só criador (+admin).
+function isProjectVisible(proj){
+  if(!proj) return false;
+  if(currentUserIsAdmin()) return true;
+  const me=(state.currentUserEmail||'').toLowerCase();
+  if(!me) return true; // logado ainda nao resolvido — nao esconder
+  if((proj.createdBy||'').toLowerCase()===me) return true;
+  const vis=proj.visibility||'public';
+  if(vis==='public') return true;
+  if(vis==='restricted') return (proj.members||[]).map(x=>(x||'').toLowerCase()).includes(me);
+  return false; // private — apenas criador (tratado acima) e admin
+}
+function canEditAccess(proj){
+  if(!proj) return false;
+  if(currentUserIsAdmin()) return true;
+  const me=(state.currentUserEmail||'').toLowerCase();
+  return !!me && (proj.createdBy||'').toLowerCase()===me;
+}
+// Filtro de task vira opt-in pessoal ("minhas tarefas"). Seguranca = projeto.
 function isTaskVisible(task){
-  if(state.viewMode==='all'||currentUserIsAdmin()) return true;
+  if(state.viewMode!=='mine') return true;
+  if(currentUserIsAdmin()) return true;
   const me=(state.currentUserEmail||'').toLowerCase();
   if(!me) return true;
   return (task.assigneeEmail||'').toLowerCase()===me;
@@ -890,6 +933,9 @@ function getStats(p){
 function migrateProject(p){
   if(p.client===undefined) p.client='';
   if(p.type===undefined) p.type='projeto';
+  if(p.visibility===undefined) p.visibility='public';
+  if(!Array.isArray(p.members)) p.members=[];
+  if(p.createdBy===undefined) p.createdBy='';
   (p.phases||[]).forEach(ph=>{
     (ph.tasks||[]).forEach(t=>{
       if(!Array.isArray(t.deps)) t.deps=[];
@@ -985,8 +1031,8 @@ function applyCurrentUserUI(){
     av.title=state.currentUserName+' ('+state.currentUserEmail+')'+(currentUserIsAdmin()?' · admin':'');
   }
   const toggle=document.getElementById('view-toggle-wrap');
-  if(currentUserIsAdmin()){toggle.style.display='block';}
-  else{toggle.style.display='none';state.viewMode='mine';}
+  // Toggle visivel a todos: agora e um filtro pessoal (todos x minhas), nao um gate de seguranca.
+  toggle.style.display='block';
   refreshViewToggle();
 }
 function refreshViewToggle(){
@@ -1279,7 +1325,7 @@ function closeTaskPicker(){document.getElementById('task-picker-modal').classLis
 function renderTaskPickerList(q){
   q=(q||'').toLowerCase();
   const all=[];
-  state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
+  state.projects.filter(isProjectVisible).forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
     if(DONE_STATUSES.has(t.status)||t.status==='OBSOLETA') return;
     if(!isTaskVisible(t)) return;
     if(q&&!(t.title.toLowerCase().includes(q)||t.id.toLowerCase().includes(q)||p.name.toLowerCase().includes(q))) return;
@@ -1377,7 +1423,7 @@ function updateDrawerStats(){
   const monthStart=new Date(today.getFullYear(),today.getMonth(),1);
   const isoMonth=monthStart.toISOString().slice(0,10);
   let dToday=0,dWeek=0,dMonth=0;
-  state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{
+  state.projects.filter(isProjectVisible).forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{
     if(!e.date) return;
     const h=Number(e.durationHours)||0;
     if(e.date===isoToday) dToday+=h;
@@ -1594,17 +1640,18 @@ async function genExcelTimesheetProject(){
   await buildTimesheetExcel([proj],`${proj.name.replace(/[^a-z0-9]+/gi,'_')}_Apontamentos.xlsx`,`Apontamentos — ${proj.name}`);
 }
 async function genExcelTimesheetByClient(){
-  const proj=state.projects.find(p=>p.id===state.selectedProjId);
+  const visible=state.projects.filter(isProjectVisible);
+  const proj=visible.find(p=>p.id===state.selectedProjId);
   let client=proj?.client;
   if(!client){
-    const clients=[...new Set(state.projects.map(p=>p.client).filter(Boolean))].sort();
+    const clients=[...new Set(visible.map(p=>p.client).filter(Boolean))].sort();
     if(clients.length===0){showToast('Nenhum cliente em projetos');return;}
     const name=prompt('Cliente:\n\n'+clients.map((c,i)=>`${i+1}. ${c}`).join('\n')+'\n\nDigite o nome (ou número):');
     if(!name) return;
     const byIdx=Number(name);client=byIdx&&clients[byIdx-1]?clients[byIdx-1]:clients.find(c=>c.toLowerCase()===name.toLowerCase());
     if(!client){showToast('Cliente não encontrado');return;}
   }
-  const projects=state.projects.filter(p=>p.client===client);
+  const projects=visible.filter(p=>p.client===client);
   if(!projects.length){showToast('Sem projetos pra esse cliente');return;}
   await buildTimesheetExcel(projects,`Apontamentos_${client.replace(/[^a-z0-9]+/gi,'_')}.xlsx`,`Apontamentos — Cliente ${client}`);
 }
@@ -1827,7 +1874,7 @@ function showTeamManager(){
       </div>`;
     }).join('');
     return `
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Cadastre pelo e-mail Google. Admin vê tudo; Membro vê só onde está atribuído (filtro cosmético).</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Cadastre pelo e-mail Google. Admin vê todos os projetos. Membros veem projetos Públicos ou onde foram adicionados (configurável no botão 🌐/👥/🔒 do projeto).</div>
     <div style="max-height:300px;overflow-y:auto;margin-bottom:10px">
       ${rows||'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:14px">Nenhum membro</div>'}
     </div>
@@ -1873,6 +1920,92 @@ window.removeMember=async function(id){
   catch(e){showToast('Erro: '+e.message,3000);}
 };
 
+// ═══ ACCESS MANAGER (visibilidade do projeto) ═══
+function renderVisibilityPill(proj){
+  const vis=proj.visibility||'public';
+  const can=canEditAccess(proj);
+  const cls=can?'':'readonly';
+  const onclick=can?`onclick="event.stopPropagation();showAccessManager('${esc(proj.id)}')"`:'';
+  const title=can?'Configurar quem pode ver este projeto':'Apenas o criador ou um admin pode alterar o acesso';
+  if(vis==='restricted'){
+    const n=(proj.members||[]).length;
+    return `<button class="vis-pill restricted ${cls}" ${onclick} title="${esc(title)}">👥 ${n} ${n===1?'pessoa':'pessoas'}</button>`;
+  }
+  if(vis==='private'){
+    return `<button class="vis-pill private ${cls}" ${onclick} title="${esc(title)}">🔒 Privado</button>`;
+  }
+  return `<button class="vis-pill public ${cls}" ${onclick} title="${esc(title)}">🌐 Todos</button>`;
+}
+function showAccessManager(projId){
+  const proj=state.projects.find(p=>p.id===projId);
+  if(!proj){showToast('Projeto não encontrado');return;}
+  if(!canEditAccess(proj)){showToast('Sem permissão para alterar o acesso');return;}
+  // estado local do modal (clonamos pra cancelar funcionar)
+  const draft={visibility:proj.visibility||'public',members:[...(proj.members||[])]};
+  const buildHtml=()=>{
+    const members=(state.team.members||[]).filter(m=>(m.email||'').toLowerCase()!==(proj.createdBy||'').toLowerCase());
+    const creator=(state.team.members||[]).find(m=>(m.email||'').toLowerCase()===(proj.createdBy||'').toLowerCase());
+    const creatorLbl=proj.createdBy?(creator?`${creator.name} (${proj.createdBy})`:proj.createdBy):'<i>sem criador registrado</i>';
+    return `
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;line-height:1.5">
+        Criador: <b>${esc(creatorLbl).replace('&lt;i&gt;','<i>').replace('&lt;/i&gt;','</i>')}</b> · Admins sempre têm acesso.
+      </div>
+      <label class="acc-opt ${draft.visibility==='public'?'sel':''}" onclick="window._accSet('public')">
+        <input type="radio" name="acc-vis" ${draft.visibility==='public'?'checked':''}>
+        <div><div class="ttl">🌐 Todos da equipe</div><div class="ds">Qualquer pessoa logada vê e edita este projeto.</div></div>
+      </label>
+      <label class="acc-opt ${draft.visibility==='restricted'?'sel':''}" onclick="window._accSet('restricted')">
+        <input type="radio" name="acc-vis" ${draft.visibility==='restricted'?'checked':''}>
+        <div style="flex:1">
+          <div class="ttl">👥 Pessoas selecionadas</div>
+          <div class="ds">Apenas quem você escolher (além de você e dos admins).</div>
+          ${draft.visibility==='restricted'?`<div class="acc-mlist">
+            ${members.length===0?'<div style="color:var(--txt3);font-size:11px;text-align:center;padding:6px">Nenhum membro cadastrado em Equipe</div>':members.map(m=>{
+              const em=(m.email||'').toLowerCase();
+              const checked=draft.members.map(x=>x.toLowerCase()).includes(em);
+              return `<label onclick="event.stopPropagation()"><input type="checkbox" ${checked?'checked':''} onchange="window._accToggle('${esc(em)}',this.checked)"><span style="display:inline-flex;align-items:center;gap:6px"><span class="av-mini" style="background:${m.color};width:18px;height:18px;font-size:9px">${esc(initials(m.name,m.email))}</span>${esc(m.name||m.email)}</span></label>`;
+            }).join('')}
+          </div>`:''}
+        </div>
+      </label>
+      <label class="acc-opt ${draft.visibility==='private'?'sel':''}" onclick="window._accSet('private')">
+        <input type="radio" name="acc-vis" ${draft.visibility==='private'?'checked':''}>
+        <div><div class="ttl">🔒 Apenas eu</div><div class="ds">Só você e os administradores veem este projeto.</div></div>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+        <button class="btn" onclick="document.getElementById('access-overlay').remove()">Cancelar</button>
+        <button class="btn primary" onclick="window._accSave()">Salvar</button>
+      </div>`;
+  };
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay open';overlay.id='access-overlay';overlay.style.zIndex='250';
+  overlay.innerHTML=`<div class="modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3>🔐 Acesso · ${esc(proj.name)}</h3>
+      <button class="icon-x" onclick="document.getElementById('access-overlay').remove()">✕</button>
+    </div>
+    <div id="access-body">${buildHtml()}</div>
+  </div>`;
+  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
+  document.body.appendChild(overlay);
+  const refresh=()=>{const w=document.getElementById('access-body');if(w) w.innerHTML=buildHtml();};
+  window._accSet=v=>{draft.visibility=v;refresh();};
+  window._accToggle=(em,on)=>{
+    const lo=em.toLowerCase();
+    if(on){if(!draft.members.map(x=>x.toLowerCase()).includes(lo)) draft.members.push(lo);}
+    else{draft.members=draft.members.filter(x=>x.toLowerCase()!==lo);}
+  };
+  window._accSave=async ()=>{
+    proj.visibility=draft.visibility;
+    proj.members=draft.visibility==='restricted'?draft.members:[];
+    proj.updatedAt=new Date().toISOString();
+    document.getElementById('access-overlay').remove();
+    render();
+    try{await saveProject(proj);showToast('Acesso atualizado');}
+    catch(e){showToast('Erro ao salvar: '+e.message,3000);}
+  };
+}
+
 // User menu
 function showUserMenu(){
   const overlay=document.createElement('div');
@@ -1911,7 +2044,7 @@ async function createProject(){
   const client=document.getElementById('new-client-select').value||'';
   const type=document.getElementById('new-type-select').value||'projeto';
   const id='proj_'+Date.now();
-  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,visibility:'public',members:[],createdBy:(state.currentUserEmail||'').toLowerCase(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   migrateProject(proj);
   state.projects.push(proj);
   hideNewProjectForm();
@@ -2105,31 +2238,33 @@ function renderFoco(){
 function renderProjListPane(){
   const filter=state.projListFilter;
   const search=(state.projListSearch||'').toLowerCase();
-  let filtered=state.projects.slice();
+  // Primeiro: visibilidade no nivel do projeto (seguranca)
+  let filtered=state.projects.filter(isProjectVisible);
   if(filter==='green') filtered=filtered.filter(p=>getStats(p).health==='green');
   else if(filter==='amber') filtered=filtered.filter(p=>getStats(p).health==='amber');
   else if(filter==='red') filtered=filtered.filter(p=>getStats(p).health==='red');
   else if(filter==='done') filtered=filtered.filter(p=>getStats(p).health==='done');
   if(search) filtered=filtered.filter(p=>p.name.toLowerCase().includes(search)||(p.client||'').toLowerCase().includes(search));
-  // Visibility filter for non-admin
-  if(!currentUserIsAdmin()&&state.viewMode==='mine'){
+  // Filtro pessoal opcional: "minhas tarefas" — esconde projetos sem task atribuida ao usuario
+  if(state.viewMode==='mine'&&!currentUserIsAdmin()){
     const me=(state.currentUserEmail||'').toLowerCase();
-    filtered=filtered.filter(p=>(p.phases||[]).some(ph=>(ph.tasks||[]).some(t=>(t.assigneeEmail||'').toLowerCase()===me)));
+    if(me) filtered=filtered.filter(p=>(p.phases||[]).some(ph=>(ph.tasks||[]).some(t=>(t.assigneeEmail||'').toLowerCase()===me)));
   }
   // Sort: critical first, then amber, green, done
   const order={red:0,amber:1,green:2,done:3};
   filtered.sort((a,b)=>{const ha=getStats(a).health,hb=getStats(b).health;return (order[ha]??9)-(order[hb]??9);});
 
+  const totalVisible=state.projects.filter(isProjectVisible).length;
   return `<div class="pane pane-left" id="pane-left">
     <div class="pane-h">
-      <div><h2>Projetos</h2><div class="sub">${state.projects.length} ativos${filtered.length!==state.projects.length?` · ${filtered.length} visíveis`:''}</div></div>
+      <div><h2>Projetos</h2><div class="sub">${totalVisible} ativos${filtered.length!==totalVisible?` · ${filtered.length} visíveis`:''}</div></div>
       <button class="icon-btn" onclick="state.projListFilter='all';state.projListSearch='';render()" title="Limpar filtros">↺</button>
     </div>
     <div class="cl-search">
       <input placeholder="🔍 Buscar projeto..." value="${esc(state.projListSearch)}" oninput="state.projListSearch=this.value;render();document.querySelector('.cl-search input').focus()">
     </div>
     <div class="cl-filter">
-      <button class="f-chip ${filter==='all'?'active':''}" onclick="state.projListFilter='all';render()">Todos<span class="cnt">${state.projects.length}</span></button>
+      <button class="f-chip ${filter==='all'?'active':''}" onclick="state.projListFilter='all';render()">Todos<span class="cnt">${totalVisible}</span></button>
       <button class="f-chip ${filter==='green'?'active':''}" onclick="state.projListFilter='green';render()">🟢 OK</button>
       <button class="f-chip ${filter==='amber'?'active':''}" onclick="state.projListFilter='amber';render()">🟡 Atenção</button>
       <button class="f-chip ${filter==='red'?'active':''}" onclick="state.projListFilter='red';render()">🔴 Crítico</button>
@@ -2171,8 +2306,9 @@ function renderProjectDetailOrDashboard(){
 
 // ═══ PORTFOLIO DASHBOARD (when no project selected) ═══
 function renderPortfolioDashboardPane(){
+  const visibleProjects=state.projects.filter(isProjectVisible);
   const allTasks=[];
-  state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{if(isTaskVisible(t)) allTasks.push({...t,_pid:p.id,_pname:p.name,_phase:ph.name});})));
+  visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{if(isTaskVisible(t)) allTasks.push({...t,_pid:p.id,_pname:p.name,_phase:ph.name});})));
   const today=new Date().toISOString().slice(0,10);
   const overdue=allTasks.filter(t=>t.dueDate&&t.dueDate<today&&!DONE_STATUSES.has(t.status)&&t.status!=='OBSOLETA');
   const blocked=allTasks.filter(t=>{const p=state.projects.find(x=>x.id===t._pid);return p&&isDepsBlocked(t,p);});
@@ -2199,7 +2335,7 @@ function renderPortfolioDashboardPane(){
         </div>
 
         <div class="kpi-row">
-          <div class="kpi"><div class="l">Projetos</div><div class="v">${state.projects.length}</div></div>
+          <div class="kpi"><div class="l">Projetos</div><div class="v">${visibleProjects.length}</div></div>
           <div class="kpi"><div class="l">Atividades</div><div class="v">${allTasks.length}</div></div>
           <div class="kpi purple"><div class="l">Apontadas (período)</div><div class="v">${formatHours(periodHours)}</div></div>
           <div class="kpi"><div class="l">Total apontado</div><div class="v">${formatHours(totalAct)}</div><div class="t">${totalEst?'/ '+formatHours(totalEst):''}</div></div>
@@ -2209,8 +2345,8 @@ function renderPortfolioDashboardPane(){
 
         <div class="dash-grid">
           <div class="dash-card">
-            <div class="dash-card-h"><h3>Saúde dos Projetos</h3><span class="meta">${state.projects.length} projetos</span></div>
-            ${state.projects.length===0?'<div style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">Nenhum projeto ainda</div>':state.projects.map(p=>{
+            <div class="dash-card-h"><h3>Saúde dos Projetos</h3><span class="meta">${visibleProjects.length} projetos</span></div>
+            ${visibleProjects.length===0?'<div style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">Nenhum projeto ainda</div>':visibleProjects.map(p=>{
               const s=getStats(p);
               const colors={green:'var(--green)',amber:'var(--amber)',red:'var(--red)',done:'var(--acc)'};
               return `<div class="health-row" onclick="selectProject('${esc(p.id)}')">
@@ -2283,6 +2419,7 @@ function renderProjectDetailPane(proj){
       <h1 class="cr-name">
         <span ondblclick="renameProject()">${esc(proj.name)}</span>
         <button class="icon-btn" onclick="renameProject()" title="Renomear">✎</button>
+        ${renderVisibilityPill(proj)}
         <button class="icon-btn" onclick="confirmDeleteProject()" title="Excluir" style="margin-left:auto;color:var(--txt3)">✕</button>
       </h1>
       <div class="cr-meta">
@@ -2473,14 +2610,14 @@ function renderTaskDetailPane(){
 
 // ═══ PROJETOS PAGE (grid of cards) ═══
 function renderProjetosPage(){
-  const list=state.projects.slice().sort((a,b)=>{
+  const list=state.projects.filter(isProjectVisible).sort((a,b)=>{
     const ha=getStats(a).health,hb=getStats(b).health;
     const order={red:0,amber:1,green:2,done:3};
     return (order[ha]??9)-(order[hb]??9);
   });
   return `<div class="pane pane-mid">
     <div class="pane-h">
-      <div><h2>Projetos</h2><div class="sub">${state.projects.length} ativos</div></div>
+      <div><h2>Projetos</h2><div class="sub">${list.length} ativos</div></div>
       <div class="pane-h-actions">
         <button class="btn ghost" onclick="showClientsManager()">📁 Clientes</button>
         <button class="btn ghost" onclick="showTeamManager()">👥 Equipe</button>
@@ -2553,7 +2690,8 @@ function renderKanbanPage(){
   const today=new Date().toISOString().slice(0,10);
   const q=(state.kanbanSearch||'').toLowerCase().trim();
   const allTasks=[];
-  state.projects.forEach(p=>{
+  const visibleProjects=state.projects.filter(isProjectVisible);
+  visibleProjects.forEach(p=>{
     if(state.kanbanClient&&p.client!==state.kanbanClient) return;
     if(state.kanbanType&&(p.type||'projeto')!==state.kanbanType) return;
     (p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
@@ -2570,8 +2708,8 @@ function renderKanbanPage(){
     }));
   });
   const cols=computeKanbanColumns(allTasks);
-  const clients=[...new Set(state.projects.map(p=>p.client).filter(Boolean))].sort();
-  const responsibles=new Set();state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{if(t.assigneeEmail) responsibles.add(t.assigneeEmail);})));
+  const clients=[...new Set(visibleProjects.map(p=>p.client).filter(Boolean))].sort();
+  const responsibles=new Set();visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{if(t.assigneeEmail) responsibles.add(t.assigneeEmail);})));
 
   return `<div class="pane pane-mid">
     <div class="pane-h">
@@ -2671,7 +2809,7 @@ function renderApontamentosPage(){
   const isoEnd=days[6].toISOString().slice(0,10);
   // Collect entries in this week
   const allEntries=[];
-  state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{
+  state.projects.filter(isProjectVisible).forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>(t.timeEntries||[]).forEach(e=>{
     if(!e.date||e.date<isoStart||e.date>isoEnd) return;
     if(!isTaskVisible(t)) return;
     allEntries.push({...e,_taskTitle:t.title,_taskId:t.id,_pname:p.name,_phase:ph.name});
@@ -2748,11 +2886,12 @@ function renderApontamentosPage(){
 
 // ═══ RELATÓRIOS PAGE ═══
 function renderRelatoriosPage(){
+  const visibleProjects=state.projects.filter(isProjectVisible);
   const allTasks=[];
-  state.projects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>allTasks.push({...t,_pname:p.name,_client:p.client||''}))));
+  visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>allTasks.push({...t,_pname:p.name,_client:p.client||''}))));
   // Horas por cliente
   const byClient=new Map();
-  state.projects.forEach(p=>{const c=p.client||'(sem cliente)';if(!byClient.has(c)) byClient.set(c,0);(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>byClient.set(c,byClient.get(c)+taskActualHours(t))));});
+  visibleProjects.forEach(p=>{const c=p.client||'(sem cliente)';if(!byClient.has(c)) byClient.set(c,0);(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>byClient.set(c,byClient.get(c)+taskActualHours(t))));});
   const clientList=Array.from(byClient.entries()).sort((a,b)=>b[1]-a[1]);
   const maxClient=Math.max(...clientList.map(c=>c[1]),1);
   const palette=['var(--acc)','var(--purple)','var(--green)','var(--amber)','var(--pink)','var(--teal)','var(--red)','var(--indigo)'];
@@ -2777,10 +2916,10 @@ function renderRelatoriosPage(){
 
         <h3 style="font-size:11px;text-transform:uppercase;color:var(--txt3);letter-spacing:.06em;font-weight:700;margin:24px 0 10px">Visão geral</h3>
         <div class="kpi-row">
-          <div class="kpi"><div class="l">Projetos</div><div class="v">${state.projects.length}</div></div>
+          <div class="kpi"><div class="l">Projetos</div><div class="v">${visibleProjects.length}</div></div>
           <div class="kpi"><div class="l">Atividades</div><div class="v">${allTasks.length}</div></div>
           <div class="kpi purple"><div class="l">Horas totais</div><div class="v">${formatHours(allTasks.reduce((s,t)=>s+taskActualHours(t),0))}</div></div>
-          <div class="kpi"><div class="l">Clientes</div><div class="v">${[...new Set(state.projects.map(p=>p.client).filter(Boolean))].length}</div></div>
+          <div class="kpi"><div class="l">Clientes</div><div class="v">${[...new Set(visibleProjects.map(p=>p.client).filter(Boolean))].length}</div></div>
         </div>
 
         <div class="rel-section">
