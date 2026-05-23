@@ -82,6 +82,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .search{background:var(--bg3);padding:7px 12px;border-radius:8px;width:220px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt3);margin-left:6px}
 .search input{border:none;background:transparent;padding:0;flex:1;color:var(--txt);font-size:12px}
 .search input:focus{outline:none}
+.search{width:280px}
+/* Busca global - dropdown */
+.gs-results{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-height:380px;overflow-y:auto;z-index:200;padding:5px}
+.gs-section{font-size:9px;text-transform:uppercase;color:var(--txt3);font-weight:700;letter-spacing:.06em;padding:8px 10px 4px;cursor:default}
+.gs-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--txt);transition:background .1s}
+.gs-item:hover,.gs-item.sel{background:var(--acc-bg)}
+.gs-item.done .gs-name{text-decoration:line-through;color:var(--txt3)}
+.gs-tid{font-family:var(--mono);font-size:10px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px;flex-shrink:0}
+.gs-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-meta{font-size:10px;color:var(--txt3);flex-shrink:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-pct{font-family:var(--mono);font-size:10px;color:var(--txt3);font-weight:700;flex-shrink:0}
+.gs-empty{padding:18px;text-align:center;color:var(--txt3);font-size:11px;font-style:italic}
 .top-spacer{flex:1}
 .top-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .icon-btn{padding:7px;border-radius:7px;color:var(--txt2);position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;font-size:14px}
@@ -506,7 +518,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .knb-side .opt:hover{background:var(--bg3)}
 .knb-side .opt.active{background:var(--acc-bg);color:var(--acc);font-weight:600}
 .knb-cols{flex:1;display:flex;gap:10px;overflow-x:auto;min-width:0}
-.knb-col{flex:0 0 240px;background:var(--bg2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;max-height:100%}
+.knb-col{flex:1 1 240px;min-width:240px;max-width:380px;background:var(--bg2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;max-height:100%}
 .knb-col-h{padding:9px 12px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border)}
 .knb-col-h .dot{width:8px;height:8px;border-radius:50%;background:var(--gray)}
 .knb-col-h .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;flex:1;line-height:1.2}
@@ -729,9 +741,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
     <div class="title"><div class="title-ico">P</div><span class="label-full">ProjectManager</span></div>
     <button class="icon-btn icon-btn-mobile" id="btn-mobile-menu" onclick="toggleMobileMenu()">☰</button>
     <div class="segmented" id="seg-tabs"></div>
-    <div class="search">
+    <div class="search" style="position:relative">
       <span>⌕</span>
-      <input id="global-search" placeholder="Buscar..." oninput="onGlobalSearch(this.value)">
+      <input id="global-search" placeholder="Buscar projetos, atividades, IDs..." oninput="onGlobalSearch(this.value)" onkeydown="onGlobalSearchKey(event)" onfocus="if(this.value)onGlobalSearch(this.value)" onblur="setTimeout(()=>{const r=document.getElementById('gs-results');if(r)r.style.display='none'},180)">
+      <div id="gs-results" class="gs-results"></div>
     </div>
     <div class="top-spacer"></div>
     <span class="save-status" id="save-status"></span>
@@ -3817,9 +3830,84 @@ function renderRelatoriosPage(){
 }
 
 // Global search (topbar) — quick navigation
+// ═══ BUSCA GLOBAL (header) ═══
+// Dropdown mini-palette: digita e ve projetos + atividades matching. Click navega.
+let _gsSelIdx=-1;
 function onGlobalSearch(q){
-  // Simple debounced helper — for now just opens task picker if query is non-empty
-  // (full implementation: command palette style overlay)
+  clearTimeout(window._gsT);
+  window._gsT=setTimeout(()=>_runGlobalSearch(q),120);
+}
+function _runGlobalSearch(q){
+  const box=document.getElementById('gs-results');if(!box) return;
+  q=(q||'').trim().toLowerCase();
+  if(!q){box.style.display='none';box.innerHTML='';_gsSelIdx=-1;return;}
+  // Procura projetos visiveis e tasks neles
+  const visibleProjs=state.projects.filter(isProjectVisible);
+  const projMatches=visibleProjs.filter(p=>(p.name||'').toLowerCase().includes(q)||(p.client||'').toLowerCase().includes(q)).slice(0,5);
+  const taskMatches=[];
+  for(const p of visibleProjs){
+    for(const ph of (p.phases||[])){
+      for(const t of (ph.tasks||[])){
+        if(taskMatches.length>=8) break;
+        const matches=(t.title||'').toLowerCase().includes(q)||(t.id||'').toLowerCase().includes(q);
+        if(matches) taskMatches.push({t,p,ph});
+      }
+    }
+  }
+  const total=projMatches.length+taskMatches.length;
+  if(total===0){
+    box.style.display='block';
+    box.innerHTML='<div class="gs-empty">Nada encontrado</div>';
+    _gsSelIdx=-1;return;
+  }
+  let idx=0;
+  const items=[];
+  if(projMatches.length){
+    items.push(`<div class="gs-section">📁 Projetos</div>`);
+    projMatches.forEach(p=>{
+      const s=getStats(p);
+      items.push(`<div class="gs-item" data-idx="${idx++}" onmousedown="event.preventDefault()" onclick="_gsGo('proj','${esc(p.id)}')">
+        <span class="gs-name">${esc(p.name)}</span>
+        ${p.client?`<span class="gs-meta">${esc(p.client)}</span>`:''}
+        <span class="gs-pct">${s.pct}%</span>
+      </div>`);
+    });
+  }
+  if(taskMatches.length){
+    items.push(`<div class="gs-section">📋 Atividades</div>`);
+    taskMatches.forEach(({t,p,ph})=>{
+      const isDone=DONE_STATUSES.has(t.status);
+      items.push(`<div class="gs-item ${isDone?'done':''}" data-idx="${idx++}" onmousedown="event.preventDefault()" onclick="_gsGo('task','${esc(p.id)}','${esc(ph.id)}','${esc(t.id)}')">
+        <span class="gs-tid">${esc(t.id)}</span>
+        <span class="gs-name">${esc(t.title)}</span>
+        <span class="gs-meta">${esc(p.name)}</span>
+      </div>`);
+    });
+  }
+  box.innerHTML=items.join('');box.style.display='block';
+  _gsSelIdx=-1;
+  _gsHighlight();
+}
+function _gsHighlight(){
+  document.querySelectorAll('#gs-results .gs-item').forEach((el,i)=>{
+    el.classList.toggle('sel',i===_gsSelIdx);
+    if(i===_gsSelIdx) el.scrollIntoView({block:'nearest'});
+  });
+}
+function onGlobalSearchKey(ev){
+  const box=document.getElementById('gs-results');
+  if(!box||box.style.display==='none') return;
+  const items=box.querySelectorAll('.gs-item');
+  if(ev.key==='ArrowDown'){ev.preventDefault();_gsSelIdx=Math.min(items.length-1,_gsSelIdx+1);_gsHighlight();}
+  else if(ev.key==='ArrowUp'){ev.preventDefault();_gsSelIdx=Math.max(0,_gsSelIdx-1);_gsHighlight();}
+  else if(ev.key==='Enter'){ev.preventDefault();const sel=items[_gsSelIdx]||items[0];if(sel) sel.click();}
+  else if(ev.key==='Escape'){box.style.display='none';ev.target.blur();}
+}
+function _gsGo(kind,projId,phaseId,taskId){
+  const inp=document.getElementById('global-search');if(inp) inp.value='';
+  const box=document.getElementById('gs-results');if(box){box.style.display='none';box.innerHTML='';}
+  if(kind==='proj'){selectProject(projId);}
+  else if(kind==='task'){state.selectedProjId=projId;state.selectedTaskId=taskId;state.currentPage='foco';location.hash='foco';render();}
 }
 function toggleMobileMenu(){state.mobileMenuOpen=!state.mobileMenuOpen;const el=document.querySelector('.pane-left');if(el) el.classList.toggle('mobile-open',state.mobileMenuOpen);}
 // ═══ THEME ═══
