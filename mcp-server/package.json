@@ -1,0 +1,21 @@
+{
+  "name": "projectmanager-mcp",
+  "version": "0.1.0",
+  "description": "Servidor MCP que conecta o Claude Desktop ao ProjectManager (lê JSONs do Drive)",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "auth": "node src/auth_setup.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "googleapis": "^130.0.0",
+    "open": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "AMdouradinho",
+  "license": "MIT"
+}
