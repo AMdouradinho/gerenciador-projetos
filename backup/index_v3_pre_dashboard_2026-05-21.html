@@ -117,7 +117,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .pane-body{flex:1;overflow-y:auto;overflow-x:hidden}
 .pane-left{flex:0 0 320px;border-right:1px solid var(--border)}
 .pane-mid{flex:1;min-width:0}
-.pane-right{flex:0 0 340px;border-left:1px solid var(--border);background:var(--bg2);display:none;flex-direction:column;min-height:0;overflow:hidden}
+.pane-right{flex:0 0 340px;border-left:1px solid var(--border);background:var(--bg2);display:none}
 .pane-right.open{display:flex}
 
 /* DRAWER */
@@ -351,17 +351,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .phase-tasks.open{display:block}
 .tcols{display:grid;grid-template-columns:24px 90px 1fr 130px 100px 100px 110px 32px;gap:8px;align-items:center}
 .task-header-row{padding:6px 16px;background:var(--bg2);font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;border-bottom:1px solid var(--border)}
-.task-row{padding:8px 16px 8px 28px;border-bottom:1px solid var(--border);transition:.1s;cursor:pointer;border-left:3px solid transparent;position:relative}
+.task-row{padding:8px 16px;border-bottom:1px solid var(--border);transition:.1s;cursor:pointer;border-left:3px solid transparent}
 .task-row:last-child{border-bottom:none}
 .task-row:hover{background:var(--bg3)}
-.task-row .drag-handle{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--txt4);cursor:grab;line-height:1;font-family:var(--mono);opacity:0;transition:opacity .15s;letter-spacing:-1px;user-select:none}
-.task-row:hover .drag-handle{opacity:.6}
-.task-row .drag-handle:hover{opacity:1;color:var(--acc)}
-.task-row .drag-handle:active{cursor:grabbing}
-.task-row.dragging{opacity:.35}
-.task-row.drop-above{box-shadow:inset 0 3px 0 var(--acc)}
-.task-row.drop-below{box-shadow:inset 0 -3px 0 var(--acc)}
-.phase.drop-target{box-shadow:0 0 0 2px var(--acc) inset;border-radius:8px}
 .task-row.active{background:var(--acc-bg)}
 .task-row.is-overdue{border-left-color:var(--red)}
 .task-row.is-blocked{border-left-color:var(--amber)}
@@ -409,17 +401,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .add-task-inputs{display:none;gap:5px;align-items:center;flex:1;flex-wrap:wrap}
 .add-task-inputs.open{display:flex}
 .add-task-inputs input{font-size:11px;padding:5px 8px;background:var(--bg3)}
-.inp-id{width:60px}.inp-title{flex:1;min-width:140px}.inp-start{width:120px}.inp-due{width:120px}.inp-deps{width:110px}.inp-est{width:90px}.inp-notes{width:140px}
-.inp-id-badge{font-family:var(--mono);font-size:10px;background:var(--bg);border:1px dashed var(--border2);color:var(--txt3);padding:6px 9px;border-radius:6px;display:inline-flex;align-items:center;white-space:nowrap;cursor:default}
-/* Editor de dependencias */
-.dep-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px}
-.dep-row:hover{background:var(--bg3)}
-.dep-row:last-child{border-bottom:none}
-.dep-row input[type=checkbox]{width:14px;height:14px;flex:0 0 14px;padding:0;margin:0;accent-color:var(--acc);background:transparent;border-radius:0}
-.dep-row .dep-tid{font-family:var(--mono);font-size:10px;color:var(--txt3);background:var(--bg3);padding:2px 7px;border-radius:4px;flex-shrink:0}
-.dep-row .dep-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
-.dep-row .dep-title.done{text-decoration:line-through;color:var(--txt3)}
-.dep-row .dep-phase{font-size:10px;color:var(--txt3);flex-shrink:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inp-id{width:60px}.inp-title{flex:1;min-width:140px}.inp-start{width:120px}.inp-due{width:120px}.inp-deps{width:110px}.inp-notes{width:140px}
 
 #add-phase-row{padding:10px 24px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0}
 .add-phase-btn{font-size:12px;color:var(--txt3);background:transparent;padding:5px 10px;border-radius:6px;font-weight:600}
@@ -429,14 +411,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 #add-phase-form input{flex:1;font-size:12px;background:var(--bg3)}
 
 /* TASK DETAIL (right pane) */
-.td-hdr{padding:18px 18px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
+.td-hdr{padding:18px 18px 14px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;display:flex;align-items:flex-start;gap:10px}
 .td-hdr-body{flex:1;min-width:0}
 .td-tid{font-family:var(--mono);font-size:10px;color:var(--txt3);background:var(--bg3);padding:2px 7px;border-radius:5px;display:inline-block;margin-bottom:6px}
 .td-title{font-size:15px;font-weight:700;letter-spacing:-.02em;line-height:1.3;margin-bottom:8px}
 .td-status{display:inline-block;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .td-close{width:28px;height:28px;border-radius:50%;background:var(--bg3);color:var(--txt3);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .td-close:hover{background:var(--bg4);color:var(--txt)}
-.td-body{padding:18px;overflow-y:auto;flex:1;min-height:0}
+.td-body{padding:18px}
 .td-section{margin-bottom:18px}
 .td-section h4{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .td-section h4 .right{margin-left:auto;cursor:pointer;color:var(--acc);font-weight:600}
@@ -486,86 +468,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .dash-period button{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;color:var(--txt2)}
 .dash-period button.active{background:var(--acc);color:#fff}
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px}
-/* Dashboard ativo */
-.dash-block{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
-.dash-block-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);font-weight:700;margin-bottom:10px}
-.dash-block-urgent{border-left:4px solid var(--red);background:linear-gradient(to right,var(--red-bg) 0%,var(--bg2) 60%)}
-.dash-block-good{border-left:4px solid var(--green);padding:10px 14px}
-.dash-block-good .dash-block-h{color:var(--green);margin-bottom:4px}
-.urgent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.urgent-card{background:var(--bg);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
-.urgent-card-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.urgent-card .av-mini{width:24px;height:24px;font-size:11px}
-.urgent-name{font-size:12px;font-weight:700;color:var(--txt)}
-.urgent-meta{font-size:10px;color:var(--txt3)}
-.urgent-tasks{display:flex;flex-direction:column;gap:3px}
-.urgent-task{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--txt2);transition:background .1s}
-.urgent-task:hover{background:var(--bg3);color:var(--txt)}
-.urgent-task .tid{font-family:var(--mono);font-size:9px;color:var(--txt3);background:var(--bg3);padding:1px 5px;border-radius:3px;flex-shrink:0}
-.urgent-task .ttl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.urgent-task .days{font-family:var(--mono);font-size:10px;color:var(--red);font-weight:700;flex-shrink:0}
-.urgent-more{font-size:10px;color:var(--txt3);text-align:center;padding:3px;font-style:italic}
-/* Sua equipe agora */
-.team-now{display:flex;flex-direction:column;gap:5px}
-.team-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:8px;background:var(--bg)}
-.team-row.team-bad{border-left:3px solid var(--red)}
-.team-row.team-warn{border-left:3px solid var(--amber)}
-.team-row.team-ok{border-left:3px solid var(--green)}
-.team-row.team-inactive{border-left:3px solid var(--txt4);opacity:.7}
-.team-row .av-mini{width:28px;height:28px;font-size:11px;flex-shrink:0}
-.team-info{flex:1;min-width:0}
-.team-name{font-size:13px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.team-label{font-size:10px;color:var(--txt3);font-weight:500}
-.team-meta{font-size:11px;color:var(--txt2);margin-top:2px}
-.team-done{font-size:10px;color:var(--green);background:var(--green-bg);padding:3px 8px;border-radius:100px;font-weight:700;flex-shrink:0}
-/* Agenda 7 dias */
-.agenda-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.agenda-day{background:var(--bg);border-radius:8px;padding:8px;border:1px solid var(--border);min-height:130px}
-.agenda-day.today{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
-.agenda-day.weekend{opacity:.55}
-.agenda-day-h{display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:10px}
-.agenda-day-h .wd{color:var(--txt3);font-weight:700;text-transform:uppercase;font-size:9px}
-.agenda-day-h .nm{color:var(--txt);font-weight:700;font-family:var(--mono);font-size:10px}
-.agenda-day-h .cnt{margin-left:auto;font-size:9px;background:var(--acc-bg);color:var(--acc);padding:1px 6px;border-radius:100px;font-weight:700;font-family:var(--mono)}
-.agenda-day-body{display:flex;flex-direction:column;gap:3px}
-.agenda-task{display:flex;align-items:center;gap:5px;padding:3px 4px;font-size:10px;color:var(--txt2);border-radius:4px;cursor:pointer;transition:background .1s}
-.agenda-task:hover{background:var(--bg3);color:var(--txt)}
-.agenda-task .av-tiny{width:14px;height:14px;font-size:8px}
-.agenda-task .ttl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.agenda-empty{font-size:10px;color:var(--txt4);text-align:center;padding:8px;font-style:italic}
-.agenda-more{font-size:9px;color:var(--txt3);text-align:center;font-style:italic;padding:2px}
-/* Alocação */
-.alloc-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.alloc-tab{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border);color:var(--txt2);padding:5px 10px;border-radius:100px;cursor:pointer;font-size:11px;font-weight:600;transition:all .15s}
-.alloc-tab:hover{background:var(--bg3);color:var(--txt)}
-.alloc-tab.active{background:var(--acc);color:#fff;border-color:var(--acc)}
-.alloc-tab .av-tiny{width:16px;height:16px;font-size:8px}
-.av-mini.av-tiny{width:16px;height:16px;font-size:8px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:700;flex-shrink:0}
-/* Painel de migração (canto inferior direito) */
-.mig-panel{position:fixed;bottom:80px;right:18px;width:340px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.3);z-index:300;overflow:hidden;animation:migIn .3s ease-out}
-@keyframes migIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
-.mig-panel.mig-closing{animation:migOut .4s ease-in forwards}
-@keyframes migOut{to{transform:translateX(20px);opacity:0}}
-.mig-panel.collapsed .mig-body{display:none}
-.mig-panel .mig-h{padding:10px 14px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.mig-panel .mig-title{font-size:12px;font-weight:700;color:var(--txt)}
-.mig-panel .mig-toggle{background:transparent;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
-.mig-panel .mig-toggle:hover{background:var(--bg4)}
-.mig-panel .mig-body{padding:10px 14px}
-.mig-panel .mig-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:8px}
-.mig-panel .mig-bar-fill{height:100%;background:var(--acc);width:0;transition:width .3s}
-.mig-panel .mig-status{font-size:11px;color:var(--txt2);margin-bottom:8px;font-weight:500}
-.mig-panel .mig-list{display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;padding-right:4px}
-.mig-panel .mig-item{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:5px;font-size:11px;color:var(--txt2)}
-.mig-panel .mig-item .mig-ico{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--bg4)}
-.mig-panel .mig-item.pending .mig-ico{background:var(--bg4)}
-.mig-panel .mig-item.running .mig-ico{background:var(--acc);animation:migPulse 1s ease-in-out infinite}
-.mig-panel .mig-item.ok .mig-ico{background:var(--green)}
-.mig-panel .mig-item.fail .mig-ico{background:var(--red)}
-.mig-panel .mig-item.ok .mig-name{color:var(--txt)}
-.mig-panel .mig-item.fail .mig-name{color:var(--red)}
-.mig-panel .mig-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@keyframes migPulse{0%,100%{opacity:1}50%{opacity:.4}}
 .kpi{background:var(--bg2);border-radius:12px;padding:12px 14px}
 .kpi .l{font-size:9px;text-transform:uppercase;color:var(--txt3);font-weight:700;letter-spacing:.04em;margin-bottom:4px}
 .kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:var(--mono);line-height:1}
@@ -998,7 +900,7 @@ const KANBAN_COLS = [
 
 const BPM_TEMPLATE = {
   id:'__template__',name:'Template BPM',client:'',type:'bpm',isTemplate:true,
-  visibility:'public',members:[],createdBy:'',billable:true,billingMode:'bank',idPrefix:'TASK',
+  visibility:'public',members:[],createdBy:'',billable:true,billingMode:'bank',
   phases:[
     {id:'fase1',name:'Fase 1',tasks:[
       {id:'a1',title:'Atividade 1',status:'PENDENTE',assignee:'',notes:'',dueDate:'',deps:[]},
@@ -1135,12 +1037,6 @@ function migrateProject(p){
     changed=true;
   }
   if(p.billable===undefined){p.billable=p.billingMode!=='courtesy';changed=true;}
-  if(p.idPrefix===undefined){
-    // Deriva do nome: primeiras 4 letras alfanuméricas, uppercase. Fallback "TASK".
-    const slug=(p.name||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
-    p.idPrefix=slug||'TASK';
-    changed=true;
-  }
   (p.phases||[]).forEach(ph=>{
     (ph.tasks||[]).forEach(t=>{
       if(!Array.isArray(t.deps)){t.deps=[];changed=true;}
@@ -1376,7 +1272,38 @@ async function initApp(background=false){
     if(toMigrate.length){
       addLog(`Atualizando schema de ${toMigrate.length} projeto(s) no Drive...`);
       setSaveStatus('saving');
-      runMigrationPanel(toMigrate);
+      (async()=>{
+        // 1) Backup consolidado — só se ainda não existe nenhum (idempotente)
+        const hasBackup=Object.keys(state.fileMap).some(n=>n.startsWith('pre_migration_backup_'));
+        if(!hasBackup){
+          try{
+            const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+            const fname=`pre_migration_backup_${ts}.json`;
+            const payload={
+              timestamp:new Date().toISOString(),
+              note:'Backup automático criado antes da migração de schema para v3. Cada projeto está no estado anterior. Pra restaurar manualmente: abra este arquivo no Drive, encontre o id desejado, copie o objeto, sobrescreva o respectivo <id>.json.',
+              migratedCount:toMigrate.length,
+              projects:toMigrate.map(x=>x.snapshot)
+            };
+            const f=await createDriveFile(state.folderId,fname,payload);
+            state.fileMap[fname]=f.id;
+            addLog(`✓ Backup pré-migração salvo: ${fname}`);
+          }catch(e){
+            console.warn('Backup falhou (seguindo mesmo assim):',e);
+            addLog(`⚠ Falha ao criar backup: ${e.message}. Migração prossegue.`);
+          }
+        } else {
+          addLog('Backup pré-migração já existe — pulando.');
+        }
+        // 2) Save dos projetos migrados (sequencial pra não saturar API)
+        let ok=0,fail=0;
+        for(const x of toMigrate){
+          try{await saveProject(x.raw);ok++;}catch(e){fail++;console.warn('Migrate save fail',x.raw.id,e);}
+        }
+        setSaveStatus('saved');
+        if(fail===0) showToast(`Schema migrado: ${ok} projeto(s) atualizados no Drive`,3500);
+        else showToast(`Migrado ${ok}, falhou ${fail}. Veja console.`,5000);
+      })();
     }
     if(!background){
       showScreen('app');
@@ -1712,18 +1639,10 @@ function getProjectBounds(proj){
   return{start:new Date(Math.min(...allDates)),end:new Date(Math.max(...allDates))};
 }
 function computeTaskStart(task,proj,projStart){
-  // Prioridade 1: startDate explícito (setado manualmente ou via Recalcular prazos)
-  if(task.startDate){const d=parseISODate(task.startDate);if(d) return d;}
-  // Prioridade 2: deps — começa após a última dep terminar
-  if(task.deps&&task.deps.length){
-    const all=proj.phases.flatMap(ph=>ph.tasks);
-    const depDates=task.deps.map(d=>{const dep=all.find(x=>x.id===d);return dep&&dep.dueDate?parseISODate(dep.dueDate):null;}).filter(Boolean);
-    if(depDates.length) return new Date(Math.max(...depDates));
-  }
-  // Prioridade 3: dueDate menos 1 dia (assume entrega "no dia")
-  if(task.dueDate){const d=parseISODate(task.dueDate);if(d) return d;}
-  // Fallback: início do projeto
-  return projStart;
+  if(!task.deps||!task.deps.length) return projStart;
+  const all=proj.phases.flatMap(ph=>ph.tasks);
+  const depDates=task.deps.map(d=>{const dep=all.find(x=>x.id===d);return dep&&dep.dueDate?parseISODate(dep.dueDate):null;}).filter(Boolean);
+  return depDates.length?new Date(Math.max(...depDates)):projStart;
 }
 function fillRange(ws,range,argbHex){
   const[a,b]=range.split(':');const m1=a.match(/^([A-Z]+)(\d+)$/);const m2=b.match(/^([A-Z]+)(\d+)$/);
@@ -1867,34 +1786,29 @@ async function genExcelPlan(){
 
     // TAREFAS SHEET
     const tw=wb.addWorksheet('Tarefas',{views:[{showGridLines:false}]});
-    [14,11,50,11,12,12,12,10,10,12,22,60].forEach((w,i)=>tw.getColumn(i+1).width=w);
-    tw.mergeCells('A1:L1');const th=tw.getCell('A1');th.value='Lista Completa de Tarefas';th.font={name:'Calibri',size:16,bold:true,color:{argb:'FFFFFFFF'}};th.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F2937'}};th.alignment={vertical:'middle',horizontal:'left',indent:1};tw.getRow(1).height=30;
-    ['ID','Fase','Atividade','Status','Início','Prazo','Conclusão','% Exec','Estimadas','Apontadas','Responsável','Notas'].forEach((h,i)=>{const c=tw.getCell(2,i+1);c.value=h;c.font={name:'Calibri',size:11,bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F2937'}};c.alignment={vertical:'middle',horizontal:'center'};setBorder(tw,c.address);});
+    [14,11,50,11,12,12,10,10,22,60].forEach((w,i)=>tw.getColumn(i+1).width=w);
+    tw.mergeCells('A1:J1');const th=tw.getCell('A1');th.value='Lista Completa de Tarefas';th.font={name:'Calibri',size:16,bold:true,color:{argb:'FFFFFFFF'}};th.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F2937'}};th.alignment={vertical:'middle',horizontal:'left',indent:1};tw.getRow(1).height=30;
+    ['ID','Fase','Atividade','Status','Início','Prazo','Estimadas','Apontadas','Responsável','Notas'].forEach((h,i)=>{const c=tw.getCell(2,i+1);c.value=h;c.font={name:'Calibri',size:11,bold:true,color:{argb:'FFFFFFFF'}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F2937'}};c.alignment={vertical:'middle',horizontal:'center'};setBorder(tw,c.address);});
     tw.getRow(2).height=22;
     let trow=3;
     (proj.phases||[]).forEach((ph,phIdx)=>{
       const dark=phaseColorAt(phIdx);const light=phaseLightAt(phIdx);
       (ph.tasks||[]).forEach(t=>{
         const start=computeTaskStart(t,proj,bounds.start);const end=t.dueDate?parseISODate(t.dueDate):start;
-        const completedAt=t.completedAt?parseISODate(t.completedAt):null;
-        const pctExec=Math.max(0,Math.min(100,Number(t.percentComplete)||0));
         const m=memberByEmail(t.assigneeEmail);const respLbl=m?m.name:(t.executor||'');
         tw.getCell(trow,1).value=t.id;
         const c2=tw.getCell(trow,2);c2.value=`Fase ${phIdx+1}`;c2.font={name:'Calibri',size:10,bold:true,color:{argb:'FFFFFFFF'}};c2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+dark}};c2.alignment={vertical:'middle',horizontal:'center'};
         tw.getCell(trow,3).value=t.title;tw.getCell(trow,4).value=t.status;
         tw.getCell(trow,5).value=start;tw.getCell(trow,5).numFmt='dd/mm/yyyy';
         tw.getCell(trow,6).value=end;tw.getCell(trow,6).numFmt='dd/mm/yyyy';
-        if(completedAt){tw.getCell(trow,7).value=completedAt;tw.getCell(trow,7).numFmt='dd/mm/yyyy';}
-        tw.getCell(trow,7).alignment={vertical:'middle',horizontal:'center'};
-        tw.getCell(trow,8).value=pctExec/100;tw.getCell(trow,8).numFmt='0%';tw.getCell(trow,8).alignment={vertical:'middle',horizontal:'center'};
-        tw.getCell(trow,9).value=Number(t.estimatedHours)||0;tw.getCell(trow,9).alignment={vertical:'middle',horizontal:'center'};
-        tw.getCell(trow,10).value=Math.round(taskActualHours(t)*100)/100;tw.getCell(trow,10).alignment={vertical:'middle',horizontal:'center'};
-        tw.getCell(trow,11).value=respLbl;tw.getCell(trow,12).value=t.notes||'';
-        for(let c=1;c<=12;c++){const cell=tw.getCell(trow,c);setBorder(tw,cell.address);if(c!==2&&c!==4){if(trow%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+light}};}if(!cell.alignment) cell.alignment={vertical:'middle',horizontal:c===3?'left':'center',wrapText:c===3||c===12,indent:c===3?1:0};cell.font=cell.font||{name:'Calibri',size:10};}
+        tw.getCell(trow,7).value=Number(t.estimatedHours)||0;tw.getCell(trow,7).alignment={vertical:'middle',horizontal:'center'};
+        tw.getCell(trow,8).value=Math.round(taskActualHours(t)*100)/100;tw.getCell(trow,8).alignment={vertical:'middle',horizontal:'center'};
+        tw.getCell(trow,9).value=respLbl;tw.getCell(trow,10).value=t.notes||'';
+        for(let c=1;c<=10;c++){const cell=tw.getCell(trow,c);setBorder(tw,cell.address);if(c!==2&&c!==4){if(trow%2===1) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+light}};}if(!cell.alignment) cell.alignment={vertical:'middle',horizontal:c===3?'left':'center',wrapText:c===3||c===10,indent:c===3?1:0};cell.font=cell.font||{name:'Calibri',size:10};}
         tw.getRow(trow).height=28;trow++;
       });
     });
-    tw.autoFilter={from:{row:2,column:1},to:{row:trow-1,column:12}};
+    tw.autoFilter={from:{row:2,column:1},to:{row:trow-1,column:10}};
     tw.views=[{state:'frozen',ySplit:2,showGridLines:false}];
 
     const buf=await wb.xlsx.writeBuffer();
@@ -2010,8 +1924,7 @@ function genMSProjectXML(){
       const tUid=uid++;idByTaskKey[t.id]=tUid;
       const start=computeTaskStart(t,proj,bounds.start);const end=t.dueDate?parseISODate(t.dueDate):start;
       const hours=Number(t.estimatedHours)||Math.max(1,Math.round(((end-start)/864e5+1))*8);
-      const pct=Math.max(0,Math.min(100,Number(t.percentComplete)||0));
-      flat.push({uid:tUid,outline:2,id:tUid,name:t.title,start,end,duration:hours,isSummary:false,deps:(t.deps||[]).slice(),pct});
+      flat.push({uid:tUid,outline:2,id:tUid,name:t.title,start,end,duration:hours,isSummary:false,deps:(t.deps||[]).slice()});
     });
   });
   flat.forEach(t=>{if(t.deps&&t.deps.length) t.depUids=t.deps.map(d=>idByTaskKey[d]).filter(Boolean);});
@@ -2030,7 +1943,6 @@ ${flat.map(t=>`    <Task>
       <OutlineLevel>${t.outline}</OutlineLevel><Summary>${t.isSummary?1:0}</Summary>
       ${t.start?`<Start>${isoLocal(t.start)}</Start>`:''}${t.end?`<Finish>${isoLocal(t.end)}</Finish>`:''}
       <Duration>PT${t.duration||8}H0M0S</Duration><DurationFormat>7</DurationFormat>
-      ${!t.isSummary&&t.pct!==undefined?`<PercentComplete>${t.pct}</PercentComplete><PercentWorkComplete>${t.pct}</PercentWorkComplete>`:''}
 ${(t.depUids||[]).map(d=>`      <PredecessorLink><PredecessorUID>${d}</PredecessorUID><Type>1</Type><CrossProject>0</CrossProject></PredecessorLink>`).join('\n')}
     </Task>`).join('\n')}
   </Tasks>
@@ -2665,14 +2577,7 @@ async function createProject(){
   const clientObj=state.clients.find(c=>(c.name||'').toLowerCase()===(client||'').toLowerCase());
   const cBillType=clientObj?.billingType||'hourly';
   const defaultMode=cBillType==='hourly'?'extra':'bank'; // hour_bank e fixed → bank; hourly → extra
-  // idPrefix derivado do nome (única no escopo do user) — 1-4 letras
-  const baseSlug=(name||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4)||'TASK';
-  let prefix=baseSlug;let n=2;
-  while(state.projects.some(p=>(p.idPrefix||'').toUpperCase()===prefix)){
-    prefix=(baseSlug.slice(0,3)+String(n)).slice(0,4);n++;
-    if(n>9){prefix=baseSlug.slice(0,3)+'X';break;}
-  }
-  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,visibility:'public',members:[],createdBy:(state.currentUserEmail||'').toLowerCase(),billable:true,billingMode:defaultMode,idPrefix:prefix,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const proj={...JSON.parse(JSON.stringify(BPM_TEMPLATE)),id,name,client,type,isTemplate:false,visibility:'public',members:[],createdBy:(state.currentUserEmail||'').toLowerCase(),billable:true,billingMode:defaultMode,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
   migrateProject(proj);
   state.projects.push(proj);
   hideNewProjectForm();
@@ -2683,191 +2588,6 @@ async function createProject(){
   state.fileMap[id+'.json']=f.id;
   setSaveStatus('saved');saveCache();showToast(`"${name}" criado`);
 }
-// Duplicar projeto: cria copia "[TESTE] Nome" pra sandbox (não toca no original)
-async function duplicateProject(){
-  const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
-  if(!confirm(`Duplicar "${proj.name}"?\n\nVai criar uma cópia chamada "[TESTE] ${proj.name}" com TODAS as fases e atividades. Útil pra testar features novas sem mexer no original.\n\nO original NÃO é alterado.`)) return;
-  const newId='proj_'+Date.now();
-  const clone=JSON.parse(JSON.stringify(proj));
-  // Reseta identificadores e marcadores próprios da cópia
-  clone.id=newId;
-  clone.name='[TESTE] '+proj.name;
-  clone.createdAt=new Date().toISOString();
-  clone.updatedAt=new Date().toISOString();
-  clone.createdBy=(state.currentUserEmail||'').toLowerCase();
-  // Novo idPrefix derivado (se houver) — adiciona T pra distinguir
-  if(clone.idPrefix) clone.idPrefix=(clone.idPrefix+'T').slice(0,4).toUpperCase();
-  // Gera IDs novos pras fases e tasks (mantendo a estrutura interna)
-  (clone.phases||[]).forEach((ph,i)=>{
-    const oldPhId=ph.id;
-    ph.id='ph_'+Date.now()+'_'+i;
-    (ph.tasks||[]).forEach((t,j)=>{
-      const oldTid=t.id;
-      // Mantém o ID human-readable original (D01, S02 etc.) — só dispara dedup interna via storage da fase
-      // Limpa apontamentos e timestamps de execução pra ficar "limpo" no sandbox
-      t.timeEntries=[];
-      t.completedAt='';
-      t.percentComplete=t.percentComplete||0;
-      // Se quiser zerar status pra PENDENTE, descomentar:
-      // t.status='PENDENTE'; t.percentComplete=0;
-    });
-  });
-  state.projects.push(clone);
-  setSaveStatus('saving');
-  try{
-    const f=await createDriveFile(state.folderId,newId+'.json',clone);
-    state.fileMap[newId+'.json']=f.id;
-    setSaveStatus('saved');saveCache();
-    state.selectedProjId=newId;state.selectedTaskId=null;
-    state.currentPage='foco';location.hash='foco';render();
-    showToast(`"[TESTE] ${proj.name}" criado · use à vontade pra testar`,4000);
-  }catch(e){
-    setSaveStatus('error');
-    state.projects=state.projects.filter(p=>p.id!==newId);
-    showToast('Erro ao duplicar: '+e.message,4000);
-  }
-}
-
-// Recalcular prazos automaticamente (deps + estimatedHours, 8h/dia × seg-sex)
-async function recalcDates(){
-  const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
-  showRecalcDatesModal(proj);
-}
-
-function _addBusinessHours(startMs, hours){
-  // Adiciona N horas úteis (8h/dia, seg-sex). Retorna timestamp ms.
-  // Algoritmo simples: vai dia a dia, pulando sab/dom, descontando 8h por dia.
-  const d=new Date(startMs);d.setHours(0,0,0,0);
-  let remaining=hours;
-  // Avança pro próximo dia útil se atual for fim de semana
-  while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
-  // Conta o próprio dia inicial como o 1º dia útil (8h)
-  while(remaining>8){
-    d.setDate(d.getDate()+1);
-    while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
-    remaining-=8;
-  }
-  return +d;
-}
-
-function _addBusinessDays(startMs, days){
-  // Adiciona N dias úteis ao timestamp. Útil quando estimatedHours=0 (mínimo 1 dia).
-  const d=new Date(startMs);d.setHours(0,0,0,0);
-  let added=0;
-  while(added<days){
-    d.setDate(d.getDate()+1);
-    if(d.getDay()!==0&&d.getDay()!==6) added++;
-  }
-  return +d;
-}
-
-function _isoFromMs(ms){return new Date(ms).toISOString().slice(0,10);}
-
-function computeAutoSchedule(proj, opts){
-  // Retorna {ok, schedule:{taskId:{start,due}}, cycles:[], errors:[]}
-  // opts: {baseDate, skipDone, overrideManual}
-  const baseMs=+new Date((opts.baseDate||new Date().toISOString().slice(0,10))+'T00:00:00');
-  const tasksAll=[];
-  (proj.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>tasksAll.push({t,phase:ph})));
-  const byId={};tasksAll.forEach(x=>byId[x.t.id]=x);
-  // Topo sort via Kahn
-  const indeg={},graph={};
-  tasksAll.forEach(({t})=>{indeg[t.id]=0;graph[t.id]=[];});
-  tasksAll.forEach(({t})=>{
-    (t.deps||[]).forEach(d=>{
-      if(byId[d]){graph[d].push(t.id);indeg[t.id]++;}
-    });
-  });
-  const queue=Object.keys(indeg).filter(id=>indeg[id]===0);
-  const order=[];
-  while(queue.length){
-    const id=queue.shift();order.push(id);
-    graph[id].forEach(n=>{indeg[n]--;if(indeg[n]===0) queue.push(n);});
-  }
-  const cycles=Object.keys(indeg).filter(id=>indeg[id]>0);
-  const schedule={};
-  for(const id of order){
-    const {t}=byId[id];
-    if(opts.skipDone&&DONE_STATUSES.has(t.status)) continue;
-    // Quando começa: max(due das deps + 1 dia útil, baseDate ou startDate manual se respeitar)
-    let earliestMs=baseMs;
-    (t.deps||[]).forEach(d=>{
-      if(schedule[d]){earliestMs=Math.max(earliestMs,_addBusinessDays(schedule[d].dueMs,1));}
-      else if(byId[d]&&byId[d].t.dueDate){
-        earliestMs=Math.max(earliestMs,_addBusinessDays(+new Date(byId[d].t.dueDate+'T00:00:00'),1));
-      }
-    });
-    // Se respeita manual e tem startDate, usa o maior
-    if(!opts.overrideManual&&t.startDate){
-      const ms=+new Date(t.startDate+'T00:00:00');earliestMs=Math.max(earliestMs,ms);
-    }
-    const est=Math.max(0,Number(t.estimatedHours)||0);
-    const dueMs=est>0?_addBusinessHours(earliestMs,est):_addBusinessDays(earliestMs,1); // sem estimativa = 1 dia útil
-    schedule[id]={startMs:earliestMs,dueMs};
-  }
-  return{ok:cycles.length===0,schedule,cycles,order};
-}
-
-function showRecalcDatesModal(proj){
-  const today=new Date().toISOString().slice(0,10);
-  let baseDate=today;let skipDone=true;let overrideManual=false;
-  let preview=null;
-  const buildHtml=()=>{
-    preview=computeAutoSchedule(proj,{baseDate,skipDone,overrideManual});
-    const changed=[];
-    Object.entries(preview.schedule).forEach(([id,sch])=>{
-      const t=(proj.phases||[]).flatMap(ph=>ph.tasks||[]).find(x=>x.id===id);
-      if(!t) return;
-      const ns=_isoFromMs(sch.startMs),nd=_isoFromMs(sch.dueMs);
-      if(ns!==t.startDate||nd!==t.dueDate) changed.push({id:t.id,title:t.title,oldS:t.startDate||'—',newS:ns,oldD:t.dueDate||'—',newD:nd});
-    });
-    return `
-      <div class="ec-row"><label>Data inicial</label><input id="rcd-base" type="date" value="${baseDate}" onclick="openDatePicker(this)" onchange="window._rcdSet('baseDate',this.value)"></div>
-      <div style="margin-top:8px;padding:10px;background:var(--bg);border-radius:8px;font-size:11px;line-height:1.6">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" ${skipDone?'checked':''} onchange="window._rcdSet('skipDone',this.checked)" style="width:14px;height:14px"> Pular tasks já concluídas</label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:6px"><input type="checkbox" ${overrideManual?'checked':''} onchange="window._rcdSet('overrideManual',this.checked)" style="width:14px;height:14px"> Sobrescrever datas de início manuais (caso contrário, respeita)</label>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--txt2)">
-        Considera: <b>8h/dia × seg-sex</b>, dependências (<code>deps</code>) e <code>estimatedHours</code> de cada task. Tasks sem estimativa = 1 dia útil.
-      </div>
-      ${preview.cycles.length?`<div style="margin-top:10px;padding:10px;background:var(--red-bg);color:var(--red);border-radius:8px;font-size:11px">⚠ Dependências circulares detectadas em: ${preview.cycles.join(', ')}. Estas tasks NÃO serão recalculadas.</div>`:''}
-      <div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--txt2)">Preview (${changed.length} mudança${changed.length===1?'':'s'})</div>
-      <div style="max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px">
-        ${changed.length===0?'<div style="padding:14px;text-align:center;color:var(--txt3);font-size:11px;font-style:italic">Nenhuma data muda</div>':`<table style="width:100%;font-size:10px"><thead><tr style="background:var(--bg3)"><th style="text-align:left;padding:6px 8px">ID</th><th style="text-align:left;padding:6px 8px">Atividade</th><th style="padding:6px 8px">Início</th><th style="padding:6px 8px">Prazo</th></tr></thead><tbody>${changed.slice(0,30).map(c=>`<tr style="border-top:1px solid var(--border)"><td style="padding:5px 8px;font-family:var(--mono);color:var(--txt3)">${esc(c.id)}</td><td style="padding:5px 8px">${esc(c.title)}</td><td style="padding:5px 8px;text-align:center;font-family:var(--mono);font-size:9px"><span style="color:var(--txt3)">${esc(c.oldS)}</span> → <span style="color:var(--green)">${esc(c.newS)}</span></td><td style="padding:5px 8px;text-align:center;font-family:var(--mono);font-size:9px"><span style="color:var(--txt3)">${esc(c.oldD)}</span> → <span style="color:var(--green)">${esc(c.newD)}</span></td></tr>`).join('')}${changed.length>30?`<tr><td colspan="4" style="padding:6px;text-align:center;color:var(--txt3);font-style:italic">…e mais ${changed.length-30} mudanças</td></tr>`:''}</tbody></table>`}
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-        <button class="btn" onclick="document.getElementById('rcd-overlay').remove()">Cancelar</button>
-        <button class="btn primary" onclick="window._rcdApply()" ${changed.length===0?'disabled':''}>Aplicar ${changed.length} mudança${changed.length===1?'':'s'}</button>
-      </div>`;
-  };
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open';overlay.id='rcd-overlay';overlay.style.zIndex='260';
-  overlay.innerHTML=`<div class="modal" style="max-width:680px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3>🔄 Recalcular prazos · ${esc(proj.name)}</h3>
-      <button class="icon-x" onclick="document.getElementById('rcd-overlay').remove()">✕</button>
-    </div>
-    <div id="rcd-body">${buildHtml()}</div>
-  </div>`;
-  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
-  document.body.appendChild(overlay);
-  const refresh=()=>{const w=document.getElementById('rcd-body');if(w) w.innerHTML=buildHtml();};
-  window._rcdSet=(k,v)=>{if(k==='baseDate') baseDate=v;else if(k==='skipDone') skipDone=v;else if(k==='overrideManual') overrideManual=v;refresh();};
-  window._rcdApply=async()=>{
-    if(!preview) return;
-    Object.entries(preview.schedule).forEach(([id,sch])=>{
-      const t=(proj.phases||[]).flatMap(ph=>ph.tasks||[]).find(x=>x.id===id);
-      if(!t) return;
-      t.startDate=_isoFromMs(sch.startMs);
-      t.dueDate=_isoFromMs(sch.dueMs);
-    });
-    proj.updatedAt=new Date().toISOString();
-    document.getElementById('rcd-overlay').remove();
-    render();scheduleSave(proj);
-    showToast(`Prazos recalculados em "${proj.name}"`);
-  };
-}
-
 function confirmDeleteProject(){
   const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
   openModal(`Excluir projeto "${proj.name}"?`,'','',async()=>{
@@ -2894,76 +2614,6 @@ function editProjectClient(){
 function editProjectType(value){
   const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
   proj.type=value;proj.updatedAt=new Date().toISOString();scheduleSave(proj);
-}
-// Editar deps da task selecionada via modal com checkboxes
-function editTaskDeps(){
-  const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
-  let task=null,phase=null;
-  for(const ph of proj.phases||[]){
-    const t=(ph.tasks||[]).find(x=>x.id===state.selectedTaskId);
-    if(t){task=t;phase=ph;break;}
-  }
-  if(!task){showToast('Selecione uma atividade primeiro');return;}
-  const allTasks=(proj.phases||[]).flatMap(ph=>(ph.tasks||[]).map(t=>({...t,_phase:ph.name})));
-  const candidates=allTasks.filter(t=>t.id!==task.id); // não pode depender de si mesma
-  let selected=new Set(task.deps||[]);
-  let search='';
-  const buildBody=()=>{
-    const sq=search.toLowerCase();
-    const filtered=candidates.filter(c=>!sq||(c.id||'').toLowerCase().includes(sq)||(c.title||'').toLowerCase().includes(sq));
-    const rows=filtered.map(c=>{
-      const checked=selected.has(c.id);
-      const isDone=DONE_STATUSES.has(c.status);
-      return `<label class="dep-row" onclick="event.stopPropagation()"><input type="checkbox" ${checked?'checked':''} onchange="window._depsTg('${esc(c.id)}',this.checked)"><span class="dep-tid">${esc(c.id)}</span><span class="dep-title ${isDone?'done':''}">${esc(c.title)}</span><span class="dep-phase">${esc(c._phase)}</span></label>`;
-    }).join('');
-    return `
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Selecione as atividades que devem ser concluídas <b>antes</b> desta. Use a busca pra filtrar.</div>
-      <input id="deps-search" placeholder="🔍 Buscar por ID ou título..." value="${esc(search)}" oninput="window._depsSearch(this.value)" style="width:100%;padding:7px 10px;margin-bottom:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:12px">
-      <div style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
-        ${rows||'<div style="padding:18px;text-align:center;color:var(--txt3);font-size:11px;font-style:italic">Nenhuma atividade encontrada</div>'}
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--txt2)">${selected.size} dep${selected.size===1?'':'s'} selecionada${selected.size===1?'':'s'}</div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-        <button class="btn" onclick="document.getElementById('deps-overlay').remove()">Cancelar</button>
-        <button class="btn primary" onclick="window._depsSave()">Salvar</button>
-      </div>`;
-  };
-  const overlay=document.createElement('div');
-  overlay.className='modal-overlay open';overlay.id='deps-overlay';overlay.style.zIndex='260';
-  overlay.innerHTML=`<div class="modal" style="max-width:560px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3>🔗 Dependências · ${esc(task.id)}</h3>
-      <button class="icon-x" onclick="document.getElementById('deps-overlay').remove()">✕</button>
-    </div>
-    <div id="deps-body">${buildBody()}</div>
-  </div>`;
-  overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.remove();});
-  document.body.appendChild(overlay);
-  setTimeout(()=>document.getElementById('deps-search')?.focus(),50);
-  const refresh=()=>{const w=document.getElementById('deps-body');if(w) w.innerHTML=buildBody();};
-  window._depsTg=(id,checked)=>{if(checked) selected.add(id);else selected.delete(id);refresh();setTimeout(()=>document.getElementById('deps-search')?.focus(),20);};
-  window._depsSearch=(v)=>{search=v;refresh();const s=document.getElementById('deps-search');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}};
-  window._depsSave=()=>{
-    task.deps=Array.from(selected);
-    proj.updatedAt=new Date().toISOString();
-    document.getElementById('deps-overlay').remove();
-    render();scheduleSave(proj);
-    showToast(`${task.deps.length} dependência${task.deps.length===1?'':'s'} salva${task.deps.length===1?'':'s'}`);
-  };
-}
-
-function editProjectIdPrefix(){
-  const proj=state.projects.find(p=>p.id===state.selectedProjId);if(!proj) return;
-  const cur=proj.idPrefix||'TASK';
-  openModal('ID prefix do projeto','1 a 4 letras (A-Z, 0-9). Ex: ALDO, BOT1, MIGR',cur,val=>{
-    const v=(val||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
-    if(!v){showToast('Prefix inválido — use 1-4 letras/dígitos');return;}
-    // Avisa se já existe outro projeto com mesmo prefix
-    const dup=state.projects.find(p=>p.id!==proj.id&&(p.idPrefix||'').toUpperCase()===v);
-    if(dup){if(!confirm(`O prefix "${v}" já é usado em "${dup.name}". Aceita conflito mesmo assim?`)) return;}
-    proj.idPrefix=v;proj.updatedAt=new Date().toISOString();scheduleSave(proj);render();
-    showToast(`Prefix atualizado pra ${v} · próximas atividades nasceriam como ${v}.${String(1+((proj.phases||[]).flatMap(ph=>ph.tasks||[]).length)).padStart(3,'0')}`);
-  });
 }
 // Faturamento: 3 modos por projeto
 const BILLING_MODE_META={
@@ -3008,43 +2658,31 @@ function submitAddPhase(){
 }
 
 // ═══ TASK CRUD ═══
-function showAddTask(phaseId){const el=document.getElementById('atf-'+phaseId);if(!el) return;el.classList.add('open');document.getElementById('at-title-'+phaseId)?.focus();}
+function showAddTask(phaseId){const el=document.getElementById('atf-'+phaseId);if(!el) return;el.classList.add('open');document.getElementById('at-id-'+phaseId)?.focus();}
 function hideAddTask(phaseId){
   const el=document.getElementById('atf-'+phaseId);if(!el) return;
   el.classList.remove('open');
-  ['title','notes','est'].forEach(f=>{const x=document.getElementById('at-'+f+'-'+phaseId);if(x) x.value='';});
+  ['id','title','notes','deps'].forEach(f=>{const x=document.getElementById('at-'+f+'-'+phaseId);if(x) x.value='';});
   const due=document.getElementById('at-due-'+phaseId);if(due) due.value='';
   const start=document.getElementById('at-start-'+phaseId);if(start) start.value='';
 }
-// Próximo número sequencial pro idPrefix dado, considerando todas as tasks do projeto
-function nextAutoTaskId(proj){
-  const prefix=(proj.idPrefix||'TASK').toUpperCase();
-  const re=new RegExp('^'+prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\.(\\d+)$');
-  let max=0;
-  (proj.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    const m=(t.id||'').toUpperCase().match(re);
-    if(m){const n=Number(m[1]);if(n>max) max=n;}
-  }));
-  return `${prefix}.${String(max+1).padStart(3,'0')}`;
-}
 function submitAddTask(phaseId){
+  const id=document.getElementById('at-id-'+phaseId).value.trim();
   const title=document.getElementById('at-title-'+phaseId).value.trim();
   const notes=document.getElementById('at-notes-'+phaseId).value.trim();
   const startDate=document.getElementById('at-start-'+phaseId)?.value||'';
   const dueDate=document.getElementById('at-due-'+phaseId).value||'';
-  const estimatedHours=Math.max(0,Number(document.getElementById('at-est-'+phaseId)?.value)||0);
+  const depsRaw=document.getElementById('at-deps-'+phaseId).value.trim();
+  const deps=depsRaw?depsRaw.split(/[\s,]+/).map(s=>s.trim()).filter(Boolean):[];
   if(!title){showToast('Título é obrigatório');return;}
   if(startDate&&dueDate&&startDate>dueDate){showToast('Data de início deve ser anterior ao prazo');return;}
   const proj=state.projects.find(p=>p.id===state.selectedProjId);
   const phase=proj?.phases?.find(p=>p.id===phaseId);if(!phase) return;
-  // ID sempre auto-gerado a partir do idPrefix do projeto
-  const id=nextAutoTaskId(proj);
   phase.tasks=phase.tasks||[];
-  // Deps vazias aqui; configura depois pela sidebar (botão ✎ na linha "Deps")
-  const newTask={id,title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,startDate,completedAt:'',percentComplete:0,deps:[],estimatedHours,timeEntries:[]};
+  const newTask={id:id||'t_'+Date.now(),title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,startDate,completedAt:'',percentComplete:0,deps,estimatedHours:0,timeEntries:[]};
   phase.tasks.push(newTask);
   proj.updatedAt=new Date().toISOString();
-  hideAddTask(phaseId);render();scheduleSave(proj);showToast(`"${id}" criada${estimatedHours?` · ${estimatedHours}h estimadas`:''}`);
+  hideAddTask(phaseId);render();scheduleSave(proj);showToast(`"${title}" criada`);
 }
 function deleteTask(projId,phaseId,taskId){
   const proj=state.projects.find(p=>p.id===projId);
@@ -3152,7 +2790,6 @@ function renderTabs(){
 }
 
 function render(){
-  _resetAllocCache();
   let page=state.currentPage||'foco';
   // Gate de acesso: páginas admin-only redirecionam pra Foco se usuário não for admin
   if(ADMIN_ONLY_PAGES.has(page)&&!currentUserIsAdmin()){
@@ -3250,385 +2887,6 @@ function renderProjectDetailOrDashboard(){
 }
 
 // ═══ PORTFOLIO DASHBOARD (when no project selected) ═══
-// ─── DASHBOARD ATIVO: helpers ─────────────────────────────────────────────
-function _dashTasksByMember(visibleProjects){
-  // Map: email -> { member, overdue[], inProgress[], upcoming[], doneThisWeek[] }
-  const today=new Date().toISOString().slice(0,10);
-  const todayD=new Date();todayD.setHours(0,0,0,0);
-  const weekAgoIso=new Date(todayD.getTime()-7*86400000).toISOString().slice(0,10);
-  const map=new Map();
-  // Inclui todos os membros da equipe (mesmo sem tasks)
-  (state.team.members||[]).forEach(m=>{
-    map.set((m.email||'').toLowerCase(),{member:m,overdue:[],inProgress:[],upcoming:[],doneThisWeek:[],hoursWeek:0});
-  });
-  visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    const em=(t.assigneeEmail||'').toLowerCase();
-    if(!em) return;
-    let entry=map.get(em);
-    if(!entry){entry={member:null,overdue:[],inProgress:[],upcoming:[],doneThisWeek:[],hoursWeek:0};map.set(em,entry);}
-    const ctx={t,p,ph};
-    if(DONE_STATUSES.has(t.status)){
-      if((t.completedAt||'')>=weekAgoIso) entry.doneThisWeek.push(ctx);
-      return;
-    }
-    if(t.status==='OBSOLETA') return;
-    if(t.dueDate&&t.dueDate<today) entry.overdue.push(ctx);
-    else if(t.status==='EM ANDAMENTO') entry.inProgress.push(ctx);
-    else if(t.dueDate&&daysUntil(t.dueDate)<=7) entry.upcoming.push(ctx);
-    (t.timeEntries||[]).forEach(e=>{if(e.date>=weekAgoIso) entry.hoursWeek+=Number(e.durationHours)||0;});
-  })));
-  return map;
-}
-
-function renderDashUrgentByPerson(visibleProjects){
-  const isAdmin=currentUserIsAdmin();
-  const me=(state.currentUserEmail||'').toLowerCase();
-  const byPerson=_dashTasksByMember(visibleProjects);
-  // Filtra: só pessoas com atrasadas. Member vê só ela mesma.
-  const cards=Array.from(byPerson.entries())
-    .filter(([em,d])=>d.overdue.length&&(isAdmin||em===me))
-    .map(([em,d])=>({em,...d}))
-    .sort((a,b)=>b.overdue.length-a.overdue.length)
-    .slice(0,6);
-  if(!cards.length){
-    return `<div class="dash-block dash-block-good"><div class="dash-block-h">🟢 Sem atrasos</div><div style="font-size:11px;color:var(--txt3)">Nenhuma atividade atrasada${isAdmin?' na equipe':' atribuída a você'}. Mantenha o ritmo!</div></div>`;
-  }
-  return `<div class="dash-block dash-block-urgent">
-    <div class="dash-block-h">🔥 Urgente · ${cards.length} pessoa${cards.length===1?'':'s'} com atrasos</div>
-    <div class="urgent-grid">
-      ${cards.map(c=>{
-        const m=c.member;
-        const name=m?m.name:c.em;
-        const color=m?m.color:colorFromEmail(c.em);
-        const ini=m?initials(m.name,m.email):c.em.slice(0,2).toUpperCase();
-        const top=c.overdue.sort((a,b)=>(a.t.dueDate||'').localeCompare(b.t.dueDate||'')).slice(0,3);
-        return `<div class="urgent-card">
-          <div class="urgent-card-h">
-            <span class="av-mini" style="background:${color}">${esc(ini)}</span>
-            <div style="flex:1;min-width:0"><div class="urgent-name">${esc(name)}</div><div class="urgent-meta">🔴 ${c.overdue.length} atrasada${c.overdue.length===1?'':'s'}${c.inProgress.length?` · 🟡 ${c.inProgress.length} em andamento`:''}</div></div>
-          </div>
-          <div class="urgent-tasks">
-            ${top.map(({t,p})=>{const d=-daysUntil(t.dueDate);return `<div class="urgent-task" onclick="state.selectedProjId='${esc(p.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()"><span class="tid">${esc(t.id)}</span><span class="ttl">${esc(t.title)}</span><span class="days">-${d}d</span></div>`;}).join('')}
-            ${c.overdue.length>3?`<div class="urgent-more">+${c.overdue.length-3} mais</div>`:''}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
-}
-
-function renderDashTeamNow(visibleProjects){
-  const isAdmin=currentUserIsAdmin();
-  const me=(state.currentUserEmail||'').toLowerCase();
-  const byPerson=_dashTasksByMember(visibleProjects);
-  // Admin vê todos; membro vê só ele
-  let entries=Array.from(byPerson.entries());
-  if(!isAdmin) entries=entries.filter(([em])=>em===me);
-  if(!entries.length) return '';
-  // Status por pessoa
-  const cards=entries.map(([em,d])=>{
-    let status='ok',label='🟢 ok';
-    if(d.overdue.length>=1) {status='bad';label='🔴 atrasado';}
-    else if(d.upcoming.length>=3) {status='warn';label='🟡 atenção (prazos curtos)';}
-    else if(d.hoursWeek===0&&d.inProgress.length===0&&d.overdue.length===0) {status='inactive';label='⚫ inativo';}
-    return {em,...d,status,label};
-  }).sort((a,b)=>{const order={bad:0,warn:1,inactive:2,ok:3};return order[a.status]-order[b.status];});
-  return `<div class="dash-block">
-    <div class="dash-block-h">👥 ${isAdmin?'Sua equipe agora':'Sua situação'}</div>
-    <div class="team-now">
-      ${cards.map(c=>{
-        const m=c.member;
-        if(!m) return ''; // ignora se não tem member registrado (email solto)
-        return `<div class="team-row team-${c.status}">
-          <span class="av-mini" style="background:${m.color}">${esc(initials(m.name,m.email))}</span>
-          <div class="team-info">
-            <div class="team-name">${esc(m.name)} <span class="team-label">${c.label}</span></div>
-            <div class="team-meta">${c.overdue.length?`🔴 ${c.overdue.length} atrasada${c.overdue.length===1?'':'s'} · `:''}${c.inProgress.length?`🟡 ${c.inProgress.length} em andamento · `:''}${c.upcoming.length?`📅 ${c.upcoming.length} vencendo 7d · `:''}${formatHours(c.hoursWeek)} apontadas semana</div>
-          </div>
-          ${c.doneThisWeek.length?`<span class="team-done">✓ ${c.doneThisWeek.length} fechadas</span>`:''}
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
-}
-
-function renderDashWeekAgenda(visibleProjects){
-  const today=new Date();today.setHours(0,0,0,0);
-  // Mostra próximos 7 dias a partir de hoje (excluindo concluídas)
-  const days=[];
-  for(let i=0;i<7;i++){const d=new Date(today.getTime()+i*86400000);days.push(d);}
-  const tasks=[];
-  visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    if(DONE_STATUSES.has(t.status)||t.status==='OBSOLETA') return;
-    if(!t.dueDate) return;
-    const d=parseISODate(t.dueDate);
-    if(!d) return;
-    const diff=Math.round((+d-+today)/86400000);
-    if(diff<0||diff>6) return;
-    tasks.push({t,p,ph,dayIdx:diff});
-  })));
-  if(!tasks.length){
-    return `<div class="dash-block"><div class="dash-block-h">📅 Próximos 7 dias</div><div style="font-size:11px;color:var(--txt3);text-align:center;padding:14px">Sem prazos nos próximos 7 dias.</div></div>`;
-  }
-  const byDay=days.map((d,i)=>({d,tasks:tasks.filter(x=>x.dayIdx===i).sort((a,b)=>(a.t.id||'').localeCompare(b.t.id||''))}));
-  const WDS=['DOM','SEG','TER','QUA','QUI','SEX','SAB'];
-  return `<div class="dash-block">
-    <div class="dash-block-h">📅 Próximos 7 dias · ${tasks.length} prazo${tasks.length===1?'':'s'}</div>
-    <div class="agenda-grid">
-      ${byDay.map(({d,tasks})=>{
-        const isToday=d.getTime()===today.getTime();
-        const isWeekend=d.getDay()===0||d.getDay()===6;
-        return `<div class="agenda-day ${isToday?'today':''} ${isWeekend?'weekend':''}">
-          <div class="agenda-day-h">
-            <span class="wd">${WDS[d.getDay()]}</span>
-            <span class="nm">${d.getDate()}/${String(d.getMonth()+1).padStart(2,'0')}</span>
-            ${tasks.length?`<span class="cnt">${tasks.length}</span>`:''}
-          </div>
-          <div class="agenda-day-body">
-            ${tasks.length===0?'<div class="agenda-empty">—</div>':tasks.slice(0,4).map(({t,p})=>{
-              const m=memberByEmail(t.assigneeEmail);
-              const ini=m?initials(m.name,m.email):'?';
-              const col=m?m.color:'var(--bg3)';
-              return `<div class="agenda-task" onclick="state.selectedProjId='${esc(p.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()" title="${esc(t.title)}"><span class="av-mini av-tiny" style="background:${col}">${esc(ini)}</span><span class="ttl">${esc(t.title)}</span></div>`;
-            }).join('')}
-            ${tasks.length>4?`<div class="agenda-more">+${tasks.length-4} mais</div>`:''}
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
-}
-
-// ─── MIGRAÇÃO DE SCHEMA: painel visual + retry com backoff ────────────────
-async function _retryWithBackoff(fn, maxAttempts=3){
-  let lastErr;
-  for(let attempt=1;attempt<=maxAttempts;attempt++){
-    try{return await fn();}
-    catch(e){
-      lastErr=e;
-      const isRateLimit=e?.message?.includes('429')||e?.message?.includes('rate')||e?.message?.includes('quota');
-      const isServerErr=e?.message?.match(/5\d{2}/);
-      if(attempt<maxAttempts&&(isRateLimit||isServerErr)){
-        const wait=Math.min(8000,500*Math.pow(2,attempt-1)); // 500ms, 1s, 2s, 4s, 8s
-        await new Promise(r=>setTimeout(r,wait));
-        continue;
-      }
-      break;
-    }
-  }
-  throw lastErr;
-}
-function _buildMigPanel(){
-  let panel=document.getElementById('mig-panel');
-  if(panel) return panel;
-  panel=document.createElement('div');
-  panel.id='mig-panel';
-  panel.className='mig-panel';
-  panel.innerHTML=`<div class="mig-h"><span class="mig-title">🔄 Atualizando schema</span><button class="mig-toggle" onclick="document.getElementById('mig-panel').classList.toggle('collapsed')" title="Recolher/expandir">▾</button></div><div class="mig-body"><div class="mig-bar"><div class="mig-bar-fill" id="mig-bar-fill"></div></div><div class="mig-status" id="mig-status">Preparando...</div><div class="mig-list" id="mig-list"></div></div>`;
-  document.body.appendChild(panel);
-  return panel;
-}
-function _migUpdate(idx,total,statusText){
-  const fill=document.getElementById('mig-bar-fill');
-  if(fill) fill.style.width=Math.round(idx/total*100)+'%';
-  const st=document.getElementById('mig-status');
-  if(st) st.textContent=statusText;
-}
-function _migAddItem(name,status){
-  const list=document.getElementById('mig-list');
-  if(!list) return null;
-  const item=document.createElement('div');
-  item.className=`mig-item ${status}`;
-  item.innerHTML=`<span class="mig-ico"></span><span class="mig-name">${esc(name)}</span>`;
-  list.appendChild(item);
-  list.scrollTop=list.scrollHeight;
-  return item;
-}
-function _migSetItemStatus(item,status){if(item) item.className=`mig-item ${status}`;}
-function _migFinish(ok,fail){
-  const st=document.getElementById('mig-status');
-  if(st){
-    if(fail===0) st.innerHTML=`<span style="color:var(--green);font-weight:700">✓ ${ok} projeto${ok===1?'':'s'} atualizado${ok===1?'':'s'}</span>`;
-    else st.innerHTML=`<span style="color:var(--amber);font-weight:700">⚠ ${ok} ok · ${fail} falhou</span>`;
-  }
-  const fill=document.getElementById('mig-bar-fill');if(fill) fill.style.width='100%';
-  // Auto-fecha em 8s se tudo OK
-  if(fail===0) setTimeout(()=>{const p=document.getElementById('mig-panel');if(p) p.classList.add('mig-closing');setTimeout(()=>{const p2=document.getElementById('mig-panel');if(p2) p2.remove();},400);},8000);
-}
-async function runMigrationPanel(toMigrate){
-  _buildMigPanel();
-  _migUpdate(0,toMigrate.length+1,'Criando backup pré-migração...');
-  // 1) Backup consolidado idempotente
-  const hasBackup=Object.keys(state.fileMap).some(n=>n.startsWith('pre_migration_backup_'));
-  if(!hasBackup){
-    const backupItem=_migAddItem('Backup pré-migração','pending');
-    try{
-      const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-      const fname=`pre_migration_backup_${ts}.json`;
-      const payload={
-        timestamp:new Date().toISOString(),
-        note:'Backup automático criado antes da migração de schema. Para restaurar manualmente: abra este arquivo no Drive, encontre o id desejado, copie o objeto, sobrescreva o respectivo <id>.json.',
-        migratedCount:toMigrate.length,
-        projects:toMigrate.map(x=>x.snapshot)
-      };
-      await _retryWithBackoff(async()=>{
-        const f=await createDriveFile(state.folderId,fname,payload);
-        state.fileMap[fname]=f.id;
-      });
-      _migSetItemStatus(backupItem,'ok');
-      addLog(`✓ Backup pré-migração salvo: ${fname}`);
-    }catch(e){
-      _migSetItemStatus(backupItem,'fail');
-      console.warn('Backup falhou (seguindo mesmo assim):',e);
-      addLog(`⚠ Falha ao criar backup: ${e.message}. Migração prossegue.`);
-    }
-  } else {
-    addLog('Backup pré-migração já existe — pulando.');
-  }
-  // 2) Migra projetos um a um com retry
-  let ok=0,fail=0;
-  for(let i=0;i<toMigrate.length;i++){
-    const x=toMigrate[i];
-    _migUpdate(i+1,toMigrate.length+1,`Migrando ${i+1}/${toMigrate.length}: ${x.raw.name}`);
-    const item=_migAddItem(x.raw.name||x.raw.id,'pending');
-    _migSetItemStatus(item,'running');
-    try{
-      await _retryWithBackoff(()=>saveProject(x.raw));
-      _migSetItemStatus(item,'ok');ok++;
-    }catch(e){
-      _migSetItemStatus(item,'fail');fail++;
-      console.warn('Migrate save fail',x.raw.id,e);
-      addLog(`⚠ Falhou em "${x.raw.name}": ${e.message}`);
-    }
-  }
-  setSaveStatus('saved');
-  _migFinish(ok,fail);
-  if(fail===0) showToast(`Schema migrado: ${ok} projeto(s) atualizados`,3500);
-  else showToast(`Migrado ${ok}, falhou ${fail}. Veja o painel pra detalhes.`,6000);
-}
-
-// Cache de alocação por render (resetado a cada chamada de render)
-function _allocBadge(email){
-  if(!email) return '';
-  const lo=email.toLowerCase();
-  window._allocCache=window._allocCache||{};
-  if(window._allocCache[lo]) return window._allocCache[lo];
-  // Próxima semana (W+1, índice 1)
-  const visible=state.projects.filter(isProjectVisible);
-  const series=_computeAllocation(lo,visible,2);
-  const w1=series[1]||{hours:0};
-  const h=Math.round(w1.hours);
-  const pct=h/40*100;
-  let emoji='🟢';
-  if(pct>=90) emoji='🔴';
-  else if(pct>=60) emoji='🟡';
-  const badge=`${emoji} ${h}h`;
-  window._allocCache[lo]=badge;
-  return badge;
-}
-function _resetAllocCache(){window._allocCache={};}
-
-// ─── ALOCAÇÃO (histograma por colaborador) ────────────────────────────────
-function _computeAllocation(memberEmail, visibleProjects, weeks=8){
-  const today=new Date();today.setHours(0,0,0,0);
-  // Inicia na segunda-feira da semana atual (W0)
-  const monday=new Date(today);
-  const dow=monday.getDay();
-  const diff=dow===0?-6:1-dow; // 0=domingo→-6, 1=seg→0, 2=ter→-1...
-  monday.setDate(monday.getDate()+diff);
-  const series=[];
-  for(let w=0;w<weeks;w++){
-    const wStart=new Date(monday.getTime()+w*7*86400000);
-    const wEnd=new Date(wStart.getTime()+6*86400000);
-    let hours=0;const items=[];
-    visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-      if((t.assigneeEmail||'').toLowerCase()!==memberEmail) return;
-      if(DONE_STATUSES.has(t.status)||t.status==='OBSOLETA') return;
-      const est=Number(t.estimatedHours)||0;if(est===0) return;
-      let start=t.startDate?parseISODate(t.startDate):null;
-      let end=t.dueDate?parseISODate(t.dueDate):null;
-      if(!end&&!start) return;
-      if(!start) start=end;
-      if(!end) end=start;
-      // Overlap [start,end] ∩ [wStart,wEnd]
-      const oS=Math.max(+start,+wStart);const oE=Math.min(+end,+wEnd);
-      if(oS>oE) return;
-      const taskDays=Math.max(1,Math.round((+end-+start)/86400000)+1);
-      const overlapDays=Math.round((oE-oS)/86400000)+1;
-      const share=est*(overlapDays/taskDays);
-      hours+=share;items.push({t,p,share});
-    })));
-    series.push({wStart,wEnd,hours,items});
-  }
-  return series;
-}
-
-function renderDashAllocation(visibleProjects){
-  const isAdmin=currentUserIsAdmin();
-  const me=(state.currentUserEmail||'').toLowerCase();
-  // Quem ver: admin → todos os members; senão → só o próprio (se for member)
-  let candidates=(state.team.members||[]).filter(m=>m.email);
-  if(!isAdmin) candidates=candidates.filter(m=>(m.email||'').toLowerCase()===me);
-  if(!candidates.length) return '';
-  state.dashAllocMember=state.dashAllocMember||candidates[0].email;
-  // Se o estado aponta pra um membro que não está na lista, reseta
-  if(!candidates.some(m=>(m.email||'').toLowerCase()===(state.dashAllocMember||'').toLowerCase())){
-    state.dashAllocMember=candidates[0].email;
-  }
-  const selectedEmail=(state.dashAllocMember||'').toLowerCase();
-  const series=_computeAllocation(selectedEmail,visibleProjects,8);
-  const CAPACITY=40;
-  const maxH=Math.max(CAPACITY,...series.map(s=>s.hours))*1.1;
-  // SVG
-  const W=720,H=180,PAD_L=44,PAD_R=20,PAD_T=14,PAD_B=34;
-  const chartW=W-PAD_L-PAD_R;const chartH=H-PAD_T-PAD_B;
-  const barW=Math.floor(chartW/series.length*0.7);
-  const stepX=chartW/series.length;
-  const yOf=h=>PAD_T+chartH-(h/maxH)*chartH;
-  const capY=yOf(CAPACITY);
-  const bars=series.map((s,i)=>{
-    const x=PAD_L+i*stepX+(stepX-barW)/2;
-    const h=Math.max(2,(s.hours/maxH)*chartH);
-    const y=PAD_T+chartH-h;
-    const over=s.hours>CAPACITY;
-    return `<g><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" rx="3" fill="${over?'var(--red)':'var(--acc)'}" opacity=".85"><title>${s.hours.toFixed(1)}h · ${s.items.length} task${s.items.length===1?'':'s'}</title></rect>
-      ${s.hours>0?`<text x="${(x+barW/2).toFixed(1)}" y="${(y-3).toFixed(1)}" font-size="9" fill="${over?'var(--red)':'var(--txt2)'}" text-anchor="middle" font-weight="700">${Math.round(s.hours)}h</text>`:''}</g>`;
-  }).join('');
-  const labels=series.map((s,i)=>{
-    const x=PAD_L+i*stepX+stepX/2;
-    const lbl=i===0?'W0 (hoje)':`W+${i}`;
-    const dateLbl=`${s.wStart.getDate()}/${String(s.wStart.getMonth()+1).padStart(2,'0')}`;
-    return `<text x="${x.toFixed(1)}" y="${(H-PAD_B+12).toFixed(1)}" font-size="9" fill="var(--txt3)" text-anchor="middle">${lbl}</text>
-            <text x="${x.toFixed(1)}" y="${(H-PAD_B+22).toFixed(1)}" font-size="8" fill="var(--txt4)" text-anchor="middle">${dateLbl}</text>`;
-  }).join('');
-  const yTicks=[0,maxH*.25,maxH*.5,maxH*.75,maxH].map(v=>({y:yOf(v),v:Math.round(v)}));
-  const totalH=series.reduce((s,x)=>s+x.hours,0);
-  const m=memberByEmail(selectedEmail);
-  return `<div class="dash-block">
-    <div class="dash-block-h">📊 Alocação de horas · próximas 8 semanas</div>
-    ${candidates.length>1?`<div class="alloc-tabs">
-      ${candidates.map(c=>`<button class="alloc-tab ${(c.email||'').toLowerCase()===selectedEmail?'active':''}" onclick="state.dashAllocMember='${esc(c.email)}';render()"><span class="av-mini av-tiny" style="background:${c.color}">${esc(initials(c.name,c.email))}</span>${esc(c.name)}</button>`).join('')}
-    </div>`:''}
-    <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
-      <div style="flex:1;min-width:0">
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit;display:block">
-          ${yTicks.map(t=>`<line x1="${PAD_L}" y1="${t.y.toFixed(1)}" x2="${W-PAD_R}" y2="${t.y.toFixed(1)}" stroke="var(--border)" stroke-width="1" opacity=".5"/><text x="${PAD_L-6}" y="${(t.y+3).toFixed(1)}" font-size="9" fill="var(--txt3)" text-anchor="end">${t.v}h</text>`).join('')}
-          <line x1="${PAD_L}" y1="${capY.toFixed(1)}" x2="${W-PAD_R}" y2="${capY.toFixed(1)}" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="4,3"/>
-          <text x="${W-PAD_R-4}" y="${(capY-4).toFixed(1)}" font-size="9" fill="var(--red)" text-anchor="end" font-weight="700">capacidade 40h</text>
-          ${bars}
-          ${labels}
-        </svg>
-      </div>
-      <div style="flex:0 0 180px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:11px">
-        <div style="font-weight:700;margin-bottom:8px">${esc(m?m.name:selectedEmail)}</div>
-        <div style="color:var(--txt3);margin-bottom:4px">Total nas 8 semanas</div>
-        <div style="font-size:18px;font-weight:800;font-family:var(--mono);margin-bottom:8px">${Math.round(totalH)}h</div>
-        <div style="color:var(--txt3);font-size:10px;line-height:1.5">Distribuído entre <code>startDate</code> e <code>dueDate</code> de cada task atribuída. Linha vermelha = 40h/semana.</div>
-      </div>
-    </div>
-  </div>`;
-}
-
 function renderPortfolioDashboardPane(){
   const visibleProjects=state.projects.filter(isProjectVisible);
   const allTasks=[];
@@ -3657,11 +2915,6 @@ function renderPortfolioDashboardPane(){
             <button class="${state.dashPeriod==='all'?'active':''}" onclick="state.dashPeriod='all';render()">Tudo</button>
           </div>
         </div>
-
-        ${renderDashUrgentByPerson(visibleProjects)}
-        ${renderDashTeamNow(visibleProjects)}
-        ${renderDashWeekAgenda(visibleProjects)}
-        ${renderDashAllocation(visibleProjects)}
 
         <div class="kpi-row">
           <div class="kpi"><div class="l">Projetos</div><div class="v">${visibleProjects.length}</div></div>
@@ -3749,16 +3002,10 @@ function renderProjectDetailPane(proj){
         <span ondblclick="renameProject()">${esc(proj.name)}</span>
         <button class="icon-btn" onclick="renameProject()" title="Renomear">✎</button>
         ${renderVisibilityPill(proj)}
-        <span class="cr-actions-mini" style="margin-left:auto;display:flex;gap:4px">
-          <button class="icon-btn" onclick="duplicateProject()" title="Duplicar projeto (cria cópia [TESTE] pra sandbox)">⎘</button>
-          <button class="icon-btn" onclick="recalcDates()" title="Recalcular prazos (deps + estimatedHours)" style="color:var(--acc)">🔄</button>
-          <button class="icon-btn" onclick="confirmDeleteProject()" title="Excluir" style="color:var(--txt3)">✕</button>
-        </span>
+        <button class="icon-btn" onclick="confirmDeleteProject()" title="Excluir" style="margin-left:auto;color:var(--txt3)">✕</button>
       </h1>
       <div class="cr-meta">
         <span>Cliente · <b style="cursor:pointer" onclick="editProjectClient()">${esc(proj.client||'+ definir')}</b></span>
-        <span class="dot"></span>
-        <span>ID prefix · <b style="cursor:pointer;font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 7px;border-radius:4px" onclick="editProjectIdPrefix()" title="Máscara dos IDs de atividades: PREFIX.001, .002...">${esc(proj.idPrefix||'TASK')}</b></span>
         <span class="dot"></span>
         <span>Tipo · <select onchange="editProjectType(this.value)" style="font-weight:600"><option value="projeto" ${proj.type==='projeto'?'selected':''}>Projeto</option><option value="suporte" ${proj.type==='suporte'?'selected':''}>Suporte</option></select></span>
         <span class="dot"></span>
@@ -3807,7 +3054,7 @@ function renderPhase(proj,ph){
   const done=tasks.filter(t=>DONE_STATUSES.has(t.status)).length;
   const est=tasks.reduce((s,t)=>s+(Number(t.estimatedHours)||0),0);
   const act=tasks.reduce((s,t)=>s+taskActualHours(t),0);
-  return `<div class="phase" ondragover="onPhaseDragOver(event,this)" ondragleave="onPhaseDragLeave(this)" ondrop="onPhaseDrop(event,'${esc(proj.id)}','${esc(ph.id)}')">
+  return `<div class="phase">
     <div class="phase-hdr" onclick="togglePhase('${esc(ph.id)}')">
       <span class="chev ${expanded?'open':''}">▶</span>
       <span class="name">${esc(ph.name)}</span>
@@ -3825,11 +3072,11 @@ function renderPhase(proj,ph){
       <div class="add-task-row">
         <button class="add-task-btn" onclick="showAddTask('${esc(ph.id)}')">+ Atividade</button>
         <div class="add-task-inputs" id="atf-${esc(ph.id)}">
-          <span class="inp-id-badge" title="ID auto-gerado a partir do prefix do projeto. Edite o prefix no header se quiser mudar a máscara.">${esc(nextAutoTaskId(proj))}</span>
+          <input class="inp-id" placeholder="ID" id="at-id-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
           <input class="inp-title" placeholder="Título *" id="at-title-${esc(ph.id)}" onkeydown="if(event.key==='Enter')submitAddTask('${esc(ph.id)}');if(event.key==='Escape')hideAddTask('${esc(ph.id)}')">
           <input class="inp-start" type="date" id="at-start-${esc(ph.id)}" onclick="openDatePicker(this)" title="Data de início prevista">
           <input class="inp-due" type="date" id="at-due-${esc(ph.id)}" onclick="openDatePicker(this)" title="Prazo (data de fim)">
-          <input class="inp-est" type="number" min="0" step="0.5" placeholder="Est. (h)" id="at-est-${esc(ph.id)}" title="Estimativa de horas (alimenta o cálculo de prazos automático)">
+          <input class="inp-deps" placeholder="Deps" id="at-deps-${esc(ph.id)}">
           <input class="inp-notes" placeholder="Notas" id="at-notes-${esc(ph.id)}">
           <button class="btn primary" onclick="submitAddTask('${esc(ph.id)}')">OK</button>
           <button class="btn" onclick="hideAddTask('${esc(ph.id)}')">✕</button>
@@ -3852,8 +3099,7 @@ function renderTaskRow(proj,ph,t){
   const isRunning=state.timer&&state.timer.taskId===t.id&&state.timer.projId===proj.id;
   const m=memberByEmail(t.assigneeEmail);
   const respHtml=m?`<div class="av-mini av-sm" style="background:${m.color}" title="${esc(m.email)}">${esc(initials(m.name,m.email))}</div>`:'<span style="color:var(--txt4);font-size:11px">—</span>';
-  return `<div class="task-row tcols ${rc} ${isActive?'active':''}" draggable="true" ondragstart="onTaskDragStart(event,'${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" ondragend="onTaskDragEnd(event)" ondragover="onTaskDragOver(event,this)" ondragleave="this.classList.remove('drop-above','drop-below')" ondrop="onTaskDrop(event,'${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" onclick="event.target.tagName==='INPUT'||event.target.tagName==='SELECT'||event.target.classList.contains('editable')||event.target.classList.contains('hours-chip')||event.target.classList.contains('timer-btn-mini')||event.target.tagName==='BUTTON'?null:selectTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')">
-    <div class="drag-handle" title="Arrastar pra reordenar ou mover de fase">⋮⋮</div>
+  return `<div class="task-row tcols ${rc} ${isActive?'active':''}" onclick="event.target.tagName==='INPUT'||event.target.tagName==='SELECT'||event.target.classList.contains('editable')||event.target.classList.contains('hours-chip')||event.target.classList.contains('timer-btn-mini')||event.target.tagName==='BUTTON'?null:selectTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')">
     <div class="check ${DONE_STATUSES.has(t.status)?'done':''}" onclick="event.stopPropagation();updateStatus('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}',DONE_STATUSES.has('${esc(t.status)}')?'PENDENTE':'CONCLUÍDO')"></div>
     <div class="tid" title="Deps: ${esc((t.deps||[]).join(', ')||'—')}">${esc(t.id)}</div>
     <div class="ttl"><span class="editable" contenteditable="true" data-proj="${esc(proj.id)}" data-phase="${esc(ph.id)}" data-task="${esc(t.id)}" data-field="title" onblur="onEditBlur(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${esc(t.title)}</span></div>
@@ -3863,7 +3109,7 @@ function renderTaskRow(proj,ph,t){
       <button class="timer-btn-mini ${isRunning?'running':''}" onclick="event.stopPropagation();toggleTimer('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="${isRunning?'Parar':'Iniciar'} cronômetro">${isRunning?'■':'▶'}</button>
     </div>
     <div class="col-due" onclick="event.stopPropagation()"><input type="date" class="due-input ${dc}" value="${esc(t.dueDate||'')}" onclick="event.stopPropagation();openDatePicker(this)" onchange="updateTaskField('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}','dueDate',this.value)" onblur="render()"></div>
-    <div class="col-resp" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:2px">${state.team.members.length?`<select onchange="onAssigneeChange('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}',this)" title="Indicador de alocação (W+1): 🟢 livre · 🟡 cheio · 🔴 sobrelotado — apenas informativo" style="border:none;background:transparent;font-size:11px;flex:1;min-width:0;padding:0"><option value="">— sem —</option>${state.team.members.map(x=>`<option value="${esc(x.email)}" ${(t.assigneeEmail||'').toLowerCase()===x.email.toLowerCase()?'selected':''}>${esc(x.name)} · ${_allocBadge(x.email)}</option>`).join('')}</select>`:respHtml}${!t.assigneeEmail&&state.currentUserEmail&&memberByEmail(state.currentUserEmail)?`<button class="claim-task-btn" onclick="event.stopPropagation();claimTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="Assumir esta atividade pra você">✋ Pegar</button>`:''}</div>
+    <div class="col-resp" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:2px">${state.team.members.length?`<select onchange="onAssigneeChange('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}',this)" style="border:none;background:transparent;font-size:11px;flex:1;min-width:0;padding:0"><option value="">— sem —</option>${state.team.members.map(x=>`<option value="${esc(x.email)}" ${(t.assigneeEmail||'').toLowerCase()===x.email.toLowerCase()?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:respHtml}${!t.assigneeEmail&&state.currentUserEmail&&memberByEmail(state.currentUserEmail)?`<button class="claim-task-btn" onclick="event.stopPropagation();claimTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')" title="Assumir esta atividade pra você">✋ Pegar</button>`:''}</div>
     <div class="col-del" onclick="event.stopPropagation()"><button onclick="deleteTask('${esc(proj.id)}','${esc(ph.id)}','${esc(t.id)}')">✕</button></div>
   </div>`;
 }
@@ -3911,7 +3157,7 @@ function renderTaskDetailPane(){
         <div class="td-row"><span class="k">Prazo</span><span class="v mono ${ov?'red':''}">${esc(task.dueDate||'—')}</span></div>
         <div class="td-row"><span class="k">Estimado</span><span class="v mono">${est?formatHours(est):'—'}</span></div>
         <div class="td-row"><span class="k">Apontado</span><span class="v mono purple">${formatHours(act)}${est&&act>est?` <span style="color:var(--red);font-size:10px">(+${Math.round((act-est)/est*100)}%)</span>`:''}</span></div>
-        <div class="td-row"><span class="k">Deps</span><span class="v mono" style="display:flex;align-items:center;gap:6px"><span style="flex:1;min-width:0">${task.deps&&task.deps.length?esc(task.deps.join(', ')):'<span style="color:var(--txt3)">—</span>'}</span><button class="icon-btn" style="padding:3px 8px;font-size:11px;background:var(--bg3);color:var(--acc);border-radius:5px;cursor:pointer;border:none" onclick="editTaskDeps()" title="Editar dependências">✎</button></span></div>
+        <div class="td-row"><span class="k">Deps</span><span class="v mono">${task.deps&&task.deps.length?esc(task.deps.join(', ')):'—'}</span></div>
       </div>
 
       <div class="td-section">
@@ -4240,79 +3486,6 @@ function onKnbDrop(ev,body){
   if(field==='assigneeEmail'){const m=memberByEmail(value);task.executor=m?m.name:'';}
   proj.updatedAt=new Date().toISOString();
   scheduleSave(proj);state.dragSrc=null;render();
-}
-
-// ─── Drag-drop NA VIEW DO PROJETO (reordenar + mover entre fases) ─────────
-function onTaskDragStart(ev,pid,phid,tid){
-  state.dragSrc={type:'taskrow',taskId:tid,projId:pid,phaseId:phid};
-  ev.dataTransfer.effectAllowed='move';
-  // dataTransfer.setData necessário no Firefox
-  try{ev.dataTransfer.setData('text/plain',tid);}catch(e){}
-  setTimeout(()=>ev.currentTarget.classList.add('dragging'),0);
-}
-function onTaskDragEnd(ev){
-  ev.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.task-row.drop-above,.task-row.drop-below').forEach(el=>el.classList.remove('drop-above','drop-below'));
-  document.querySelectorAll('.phase.drop-target').forEach(el=>el.classList.remove('drop-target'));
-}
-function onTaskDragOver(ev,row){
-  const src=state.dragSrc;if(!src||src.type!=='taskrow') return;
-  ev.preventDefault();
-  // Limpa highlights anteriores
-  document.querySelectorAll('.task-row.drop-above,.task-row.drop-below').forEach(el=>el.classList.remove('drop-above','drop-below'));
-  const r=row.getBoundingClientRect();
-  const above=(ev.clientY-r.top)<r.height/2;
-  row.classList.add(above?'drop-above':'drop-below');
-}
-function onTaskDrop(ev,targetPid,targetPhid,targetTid){
-  ev.preventDefault();ev.stopPropagation();
-  const src=state.dragSrc;
-  if(!src||src.type!=='taskrow'){onTaskDragEnd(ev);return;}
-  if(src.taskId===targetTid){onTaskDragEnd(ev);return;}
-  const proj=state.projects.find(p=>p.id===src.projId);
-  if(!proj||src.projId!==targetPid){
-    showToast('Drag entre projetos não é permitido');onTaskDragEnd(ev);return;
-  }
-  const srcPhase=proj.phases.find(p=>p.id===src.phaseId);
-  const tgtPhase=proj.phases.find(p=>p.id===targetPhid);
-  if(!srcPhase||!tgtPhase){onTaskDragEnd(ev);return;}
-  const srcIdx=srcPhase.tasks.findIndex(t=>t.id===src.taskId);
-  if(srcIdx===-1){onTaskDragEnd(ev);return;}
-  const [task]=srcPhase.tasks.splice(srcIdx,1);
-  // Determina posição no destino
-  const tgtIdx=tgtPhase.tasks.findIndex(t=>t.id===targetTid);
-  const aboveEl=document.querySelector('.task-row.drop-above');
-  const insertAbove=!!aboveEl;
-  let insertAt=tgtIdx>=0?(insertAbove?tgtIdx:tgtIdx+1):tgtPhase.tasks.length;
-  if(srcPhase===tgtPhase&&srcIdx<tgtIdx) insertAt--;
-  tgtPhase.tasks.splice(insertAt,0,task);
-  proj.updatedAt=new Date().toISOString();
-  state.dragSrc=null;
-  scheduleSave(proj);render();
-  if(srcPhase.id!==tgtPhase.id) showToast(`Movida pra "${tgtPhase.name}"`);
-}
-// Drop direto no header da fase (pra mover task pra fim de outra fase quando não tem hover de task)
-function onPhaseDragOver(ev,phaseEl){
-  const src=state.dragSrc;if(!src||src.type!=='taskrow') return;
-  ev.preventDefault();phaseEl.classList.add('drop-target');
-}
-function onPhaseDragLeave(phaseEl){phaseEl.classList.remove('drop-target');}
-function onPhaseDrop(ev,targetPid,targetPhid){
-  ev.preventDefault();
-  const src=state.dragSrc;if(!src||src.type!=='taskrow'){onTaskDragEnd(ev);return;}
-  if(src.projId!==targetPid){showToast('Drag entre projetos não é permitido');onTaskDragEnd(ev);return;}
-  const proj=state.projects.find(p=>p.id===targetPid);
-  const srcPhase=proj.phases.find(p=>p.id===src.phaseId);
-  const tgtPhase=proj.phases.find(p=>p.id===targetPhid);
-  if(!srcPhase||!tgtPhase||srcPhase===tgtPhase){onTaskDragEnd(ev);return;}
-  const srcIdx=srcPhase.tasks.findIndex(t=>t.id===src.taskId);
-  if(srcIdx===-1){onTaskDragEnd(ev);return;}
-  const [task]=srcPhase.tasks.splice(srcIdx,1);
-  tgtPhase.tasks.push(task);
-  proj.updatedAt=new Date().toISOString();
-  state.dragSrc=null;
-  scheduleSave(proj);render();
-  showToast(`Movida pra "${tgtPhase.name}"`);
 }
 
 // ═══ APONTAMENTOS PAGE (calendar weekly) ═══
