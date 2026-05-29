@@ -491,19 +491,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .dash-block-h{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);font-weight:700;margin-bottom:10px}
 .dash-block-urgent{border-left:4px solid var(--red);background:linear-gradient(to right,var(--red-bg) 0%,var(--bg2) 60%)}
 .dash-block-good{border-left:4px solid var(--green);padding:10px 14px}
-.dash-block-wait{border-left:4px solid var(--amber)}
-.wait-list{display:flex;flex-direction:column;gap:5px}
-.wait-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg)}
-.wait-row.warn{background:var(--amber-bg)}
-.wait-row.bad{background:var(--red-bg)}
-.wait-days{font-family:var(--mono);font-size:14px;font-weight:800;color:var(--amber);min-width:42px;text-align:center;flex-shrink:0}
-.wait-row.bad .wait-days{color:var(--red)}
-.wait-info{flex:1;min-width:0;cursor:pointer}
-.wait-title{font-size:12px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wait-title .tid{font-family:var(--mono);font-size:9px;color:var(--txt3);background:var(--bg3);padding:1px 5px;border-radius:3px}
-.wait-meta{font-size:10px;color:var(--txt3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wait-cobrar{flex-shrink:0;background:var(--amber-bg);color:var(--amber);border:none;border-radius:100px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--sans);white-space:nowrap}
-.wait-cobrar:hover{filter:brightness(.95)}
 .dash-block-good .dash-block-h{color:var(--green);margin-bottom:4px}
 .urgent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .urgent-card{background:var(--bg);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
@@ -1174,13 +1161,6 @@ function migrateProject(p){
         t.percentComplete = DONE_STATUSES.has(t.status) ? 100 : 0;
         changed=true;
       }
-      // Bot Discord / pendencia de cliente
-      if(t.waitingClientSince===undefined){
-        // Tarefas que ja estao AGUARDANDO CLIENTE ganham a data de hoje como ponto de partida
-        t.waitingClientSince = t.status==='AGUARDANDO CLIENTE' ? new Date().toISOString().slice(0,10) : '';
-        changed=true;
-      }
-      if(!Array.isArray(t.activityLog)){t.activityLog=[];changed=true;}
     });
   });
   return changed;
@@ -1194,7 +1174,6 @@ function migrateTeam(team){
     if(!m.id) m.id='m_'+Date.now()+Math.random().toString(36).slice(2,7);
     if(!m.color) m.color=colorFromEmail(m.email||m.name||'');
     if(!m.role) m.role=team.admins.includes((m.email||'').toLowerCase())?'admin':'member';
-    if(m.discordId===undefined) m.discordId=''; // Bot Discord: @mention da pessoa
   });
   return team;
 }
@@ -1210,7 +1189,6 @@ function migrateClients(clients){
     if(c.contractStart===undefined){c.contractStart='';changed=true;}
     if(c.initialBalance===undefined){c.initialBalance=0;changed=true;}
     if(c.notes===undefined){c.notes='';changed=true;}
-    if(!c.contact||typeof c.contact!=='object'){c.contact={name:'',email:'',phone:'',discordId:''};changed=true;} // Contato pra cobrança
   });
   return changed;
 }
@@ -2346,8 +2324,7 @@ window.editClientFull=function(id){
   if(c.contractStart===undefined) c.contractStart='';
   if(c.initialBalance===undefined) c.initialBalance=0;
   if(c.notes===undefined) c.notes='';
-  if(!c.contact||typeof c.contact!=='object') c.contact={name:'',email:'',phone:'',discordId:''};
-  const draft={...c,contact:{...c.contact}};
+  const draft={...c};
   const buildBody=()=>{
     const t=draft.billingType||'hourly';
     return `
@@ -2373,11 +2350,6 @@ window.editClientFull=function(id){
       <div class="ec-row"><label>Início do contrato</label><input id="ec-cs" type="date" value="${esc(draft.contractStart||'')}" onclick="openDatePicker(this)"></div>
       <div class="ec-row"><label>Custo/hora interno (R$)</label><input id="ec-hr" type="number" min="0" step="0.01" value="${draft.hourlyRate||0}" title="Pra calcular margem: receita fixa - (horas × custo)"></div>
       `:''}
-      <div style="margin-top:6px;padding-top:10px;border-top:1px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);font-weight:700;margin-bottom:6px">📞 Contato pra cobrança</div></div>
-      <div class="ec-row"><label>Nome do contato</label><input id="ec-ct-name" value="${esc(draft.contact.name||'')}" placeholder="Ex: Fernanda (financeiro)"></div>
-      <div class="ec-row"><label>E-mail</label><input id="ec-ct-email" type="email" value="${esc(draft.contact.email||'')}" placeholder="contato@cliente.com"></div>
-      <div class="ec-row"><label>Telefone/WhatsApp</label><input id="ec-ct-phone" value="${esc(draft.contact.phone||'')}" placeholder="(00) 00000-0000"></div>
-      <div class="ec-row"><label>Discord ID (opcional)</label><input id="ec-ct-discord" value="${esc(draft.contact.discordId||'')}" placeholder="se o cliente usa Discord"></div>
       <div class="ec-row"><label>Notas</label><textarea id="ec-notes" rows="2" style="resize:vertical">${esc(draft.notes||'')}</textarea></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
         <button class="btn" onclick="document.getElementById('editclient-overlay').remove()">Cancelar</button>
@@ -2405,12 +2377,6 @@ window.editClientFull=function(id){
     const hr=document.getElementById('ec-hr');if(hr) draft.hourlyRate=Number(hr.value)||0;
     const mf=document.getElementById('ec-mf');if(mf) draft.monthlyFee=Number(mf.value)||0;
     const nt=document.getElementById('ec-notes');if(nt) draft.notes=nt.value;
-    // Contato
-    if(!draft.contact) draft.contact={};
-    const ctn=document.getElementById('ec-ct-name');if(ctn) draft.contact.name=ctn.value.trim();
-    const cte=document.getElementById('ec-ct-email');if(cte) draft.contact.email=cte.value.trim();
-    const ctp=document.getElementById('ec-ct-phone');if(ctp) draft.contact.phone=ctp.value.trim();
-    const ctd=document.getElementById('ec-ct-discord');if(ctd) draft.contact.discordId=ctd.value.trim();
   };
   window._ecSetType=v=>{grab();draft.billingType=v;refresh();};
   window._ecSave=async ()=>{
@@ -2472,27 +2438,24 @@ function showTeamManager(){
   const buildHtml=()=>{
     const rows=(state.team.members||[]).map(m=>{
       const isAdmin=(state.team.admins||[]).map(x=>x.toLowerCase()).includes((m.email||'').toLowerCase());
-      const hasDiscord=!!(m.discordId||'').trim();
       return `<div class="mgr-row">
         <span class="av-mini" style="background:${m.color}">${esc(initials(m.name,m.email))}</span>
         <div style="flex:1;min-width:0">
           <div class="tm-name">${esc(m.name||'(sem nome)')}</div>
-          <div class="tm-email">${esc(m.email||'')}${hasDiscord?` · 🎮 ${esc(m.discordId)}`:''}</div>
+          <div class="tm-email">${esc(m.email||'')}</div>
         </div>
-        <button onclick="editMemberDiscord('${esc(m.id)}')" title="${hasDiscord?'Editar Discord ID':'Adicionar Discord ID (pra menções do bot)'}" style="background:${hasDiscord?'var(--acc-bg)':'transparent'};color:${hasDiscord?'var(--acc)':'var(--txt3)'};padding:4px 8px;border-radius:5px;cursor:pointer;font-size:12px;border:none">🎮</button>
         <span class="tm-role ${isAdmin?'admin':'member'}">${isAdmin?'Admin':'Membro'}</span>
         <button onclick="removeMember('${esc(m.id)}')" style="background:transparent;color:var(--txt3);padding:4px 8px;border-radius:5px;cursor:pointer;font-size:12px">✕</button>
       </div>`;
     }).join('');
     return `
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Cadastre pelo e-mail Google. Admin vê todos os projetos. Membros veem projetos Públicos ou onde foram adicionados. O 🎮 guarda o Discord ID pra menções do bot.</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.5">Cadastre pelo e-mail Google. Admin vê todos os projetos. Membros veem projetos Públicos ou onde foram adicionados (configurável no botão 🌐/👥/🔒 do projeto).</div>
     <div style="max-height:300px;overflow-y:auto;margin-bottom:10px">
       ${rows||'<div style="font-size:12px;color:var(--txt3);text-align:center;padding:14px">Nenhum membro</div>'}
     </div>
     <div class="tm-add">
       <input id="tm-new-name" placeholder="Nome" onkeydown="if(event.key==='Enter') addMember()">
       <input id="tm-new-email" placeholder="e-mail Google" onkeydown="if(event.key==='Enter') addMember()">
-      <input id="tm-new-discord" placeholder="Discord ID (opcional)" onkeydown="if(event.key==='Enter') addMember()">
       <select id="tm-new-role"><option value="member">Membro</option><option value="admin">Admin</option></select>
       <button class="modal-btn primary" onclick="addMember()" style="padding:7px 14px">+</button>
     </div>`;
@@ -2514,22 +2477,13 @@ function showTeamManager(){
 window.addMember=async function(){
   const nm=document.getElementById('tm-new-name').value.trim();
   const em=document.getElementById('tm-new-email').value.trim().toLowerCase();
-  const discordId=(document.getElementById('tm-new-discord')?.value||'').trim();
   const role=document.getElementById('tm-new-role').value;
   if(!nm||!em){showToast('Preencha nome e e-mail');return;}
   if(state.team.members.some(m=>(m.email||'').toLowerCase()===em)){showToast('E-mail já cadastrado');return;}
-  const m={id:'m_'+Date.now(),name:nm,email:em,role,color:colorFromEmail(em),discordId};
+  const m={id:'m_'+Date.now(),name:nm,email:em,role,color:colorFromEmail(em)};
   state.team.members.push(m);
   if(role==='admin'&&!state.team.admins.includes(em)) state.team.admins.push(em);
   try{await saveTeam();applyCurrentUserUI();render();if(window._refreshTeamUI) window._refreshTeamUI();showToast(`"${nm}" adicionado`);}
-  catch(e){showToast('Erro: '+e.message,3000);}
-};
-window.editMemberDiscord=async function(id){
-  const m=state.team.members.find(x=>x.id===id);if(!m) return;
-  const val=prompt(`Discord ID de ${m.name}\n\nComo pegar: no Discord, ative "Modo desenvolvedor" (Config → Avançado), clique com botão direito no nome da pessoa → "Copiar ID". Cole aqui (só números).`,m.discordId||'');
-  if(val===null) return; // cancelou
-  m.discordId=(val||'').trim();
-  try{await saveTeam();if(window._refreshTeamUI) window._refreshTeamUI();showToast(m.discordId?`Discord ID salvo`:'Discord ID removido');}
   catch(e){showToast('Erro: '+e.message,3000);}
 };
 window.removeMember=async function(id){
@@ -3087,7 +3041,7 @@ function submitAddTask(phaseId){
   const id=nextAutoTaskId(proj);
   phase.tasks=phase.tasks||[];
   // Deps vazias aqui; configura depois pela sidebar (botão ✎ na linha "Deps")
-  const newTask={id,title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,startDate,completedAt:'',percentComplete:0,deps:[],estimatedHours,timeEntries:[],waitingClientSince:'',activityLog:[]};
+  const newTask={id,title,status:'PENDENTE',assignee:'',assigneeEmail:'',notes,dueDate,startDate,completedAt:'',percentComplete:0,deps:[],estimatedHours,timeEntries:[]};
   phase.tasks.push(newTask);
   proj.updatedAt=new Date().toISOString();
   hideAddTask(phaseId);render();scheduleSave(proj);showToast(`"${id}" criada${estimatedHours?` · ${estimatedHours}h estimadas`:''}`);
@@ -3103,18 +3057,11 @@ function deleteTask(projId,phaseId,taskId){
     render();scheduleSave(proj);showToast('Excluída');
   },true);
 }
-// Registra evento no histórico da task (usado por app e futuramente pelo bot Discord)
-function _logTaskActivity(task,text,who){
-  if(!Array.isArray(task.activityLog)) task.activityLog=[];
-  task.activityLog.push({at:new Date().toISOString(),who:who||state.currentUserName||state.currentUserEmail||'app',text});
-  if(task.activityLog.length>50) task.activityLog=task.activityLog.slice(-50); // cap
-}
 function updateStatus(projId,phaseId,taskId,newStatus){
   const proj=state.projects.find(p=>p.id===projId);if(!proj) return;
   const task=proj.phases?.find(p=>p.id===phaseId)?.tasks?.find(t=>t.id===taskId);if(!task) return;
   const wasDone=DONE_STATUSES.has(task.status);
   const isDone=DONE_STATUSES.has(newStatus);
-  const oldStatus=task.status;
   task.status=newStatus;
   // Auto-tracking de conclusão: status DONE preenche completedAt e percentComplete=100.
   // Usuário pode editar ambos manualmente depois (ex: ajustar data real de conclusão).
@@ -3125,14 +3072,6 @@ function updateStatus(projId,phaseId,taskId,newStatus){
     // Reverte: limpa completedAt e zera percentComplete (se estava 100 — preserva valores intermediários)
     task.completedAt='';
     if(Number(task.percentComplete)===100) task.percentComplete=0;
-  }
-  // Pendência de cliente: marca/limpa waitingClientSince ao entrar/sair de AGUARDANDO CLIENTE
-  if(newStatus==='AGUARDANDO CLIENTE' && oldStatus!=='AGUARDANDO CLIENTE'){
-    task.waitingClientSince=new Date().toISOString().slice(0,10);
-    _logTaskActivity(task,`Entrou em AGUARDANDO CLIENTE`);
-  } else if(newStatus!=='AGUARDANDO CLIENTE' && oldStatus==='AGUARDANDO CLIENTE'){
-    task.waitingClientSince='';
-    _logTaskActivity(task,`Saiu de AGUARDANDO CLIENTE → ${newStatus}`);
   }
   proj.updatedAt=new Date().toISOString();scheduleSave(proj);render();
 }
@@ -3378,57 +3317,6 @@ function renderDashUrgentByPerson(visibleProjects){
   </div>`;
 }
 
-function renderDashWaitingClient(visibleProjects){
-  const today=new Date().toISOString().slice(0,10);
-  const items=[];
-  visibleProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    if(t.status!=='AGUARDANDO CLIENTE') return;
-    const since=t.waitingClientSince||t.dueDate||'';
-    const days=since?Math.max(0,Math.round((+new Date(today)-+new Date(since))/86400000)):0;
-    items.push({t,p,ph,since,days});
-  })));
-  if(!items.length) return '';
-  items.sort((a,b)=>b.days-a.days);
-  const clientOf=name=>state.clients.find(c=>(c.name||'').toLowerCase()===(name||'').toLowerCase());
-  return `<div class="dash-block dash-block-wait">
-    <div class="dash-block-h">⏳ Esperando cliente · ${items.length} pendência${items.length===1?'':'s'}</div>
-    <div class="wait-list">
-      ${items.slice(0,8).map(({t,p,since,days})=>{
-        const cl=clientOf(p.client);
-        const contact=cl?.contact?.name||p.client||'cliente';
-        const sev=days>=7?'bad':days>=3?'warn':'';
-        return `<div class="wait-row ${sev}">
-          <div class="wait-days">${days}d</div>
-          <div class="wait-info" onclick="state.selectedProjId='${esc(p.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-            <div class="wait-title"><span class="tid">${esc(t.id)}</span> ${esc(t.title)}</div>
-            <div class="wait-meta">${esc(p.name)}${p.client?` · 📁 ${esc(p.client)}`:''}${since?` · desde ${since.split('-').reverse().join('/')}`:''}</div>
-          </div>
-          <button class="wait-cobrar" onclick="event.stopPropagation();gerarCobranca('${esc(p.id)}','${esc(t.id)}')" title="Gerar texto de cobrança pra ${esc(contact)}">✉ Cobrar</button>
-        </div>`;
-      }).join('')}
-      ${items.length>8?`<div class="urgent-more">+${items.length-8} mais aguardando cliente</div>`:''}
-    </div>
-  </div>`;
-}
-function gerarCobranca(projId,taskId){
-  const proj=state.projects.find(p=>p.id===projId);if(!proj) return;
-  const task=(proj.phases||[]).flatMap(ph=>ph.tasks||[]).find(t=>t.id===taskId);if(!task) return;
-  const cl=state.clients.find(c=>(c.name||'').toLowerCase()===(proj.client||'').toLowerCase());
-  const contato=cl?.contact?.name||'';
-  const since=task.waitingClientSince||task.dueDate||'';
-  const days=since?Math.max(0,Math.round((Date.now()-+new Date(since))/86400000)):0;
-  const saud=contato?`Olá ${contato}, tudo bem?`:'Olá, tudo bem?';
-  const msg=`${saud}\n\nEstamos com a atividade "${task.title}" (projeto ${proj.name}) aguardando seu retorno${days?` há ${days} dia${days===1?'':'s'}`:''}. Pra seguirmos com o cronograma sem atraso, você consegue nos dar um retorno?\n\nQualquer dúvida estou à disposição. Obrigado!`;
-  // Copia pro clipboard
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(msg).then(()=>showToast('Texto de cobrança copiado! Cole no WhatsApp/e-mail',4000)).catch(()=>_fallbackCopyCobranca(msg));
-  } else _fallbackCopyCobranca(msg);
-}
-function _fallbackCopyCobranca(msg){
-  const ta=document.createElement('textarea');ta.value=msg;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
-  try{document.execCommand('copy');showToast('Texto de cobrança copiado!',4000);}catch(e){alert(msg);}
-  ta.remove();
-}
 function renderDashTeamNow(visibleProjects){
   const isAdmin=currentUserIsAdmin();
   const me=(state.currentUserEmail||'').toLowerCase();
@@ -3771,7 +3659,6 @@ function renderPortfolioDashboardPane(){
         </div>
 
         ${renderDashUrgentByPerson(visibleProjects)}
-        ${renderDashWaitingClient(visibleProjects)}
         ${renderDashTeamNow(visibleProjects)}
         ${renderDashWeekAgenda(visibleProjects)}
         ${renderDashAllocation(visibleProjects)}
