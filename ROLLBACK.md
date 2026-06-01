@@ -15,7 +15,8 @@ Este documento descreve como **reverter** uma versão deployada caso ela quebre 
 1. Vá em https://github.com/AMdouradinho/gerenciador-projetos
 2. Abra a pasta `backup/`
 3. Escolha o snapshot que quer restaurar:
-   - **`index_v3_pre_partA_discord_2026-05-30.html`** → 🆕 versão imediatamente anterior à Parte A (Discord/cobrança de cliente). Tem Faturamento, dashboard ativo, alocação, Status Report.
+   - **`index_v3_pre_clientwait_2026-05-30.html`** → 🆕 versão imediatamente anterior à feature de pendência de cliente com histórico de promessas + dashboard com abas + seção Bloqueios no Status Report. Tem Parte A (Discord), Faturamento, dashboard ativo, alocação.
+   - **`index_v3_pre_partA_discord_2026-05-30.html`** → versão imediatamente anterior à Parte A (Discord/cobrança de cliente). Tem Faturamento, dashboard ativo, alocação, Status Report.
    - **`index_v3_pre_dashboard_2026-05-21.html`** → versão anterior ao Dashboard ativo. Tem Faturamento, billingMode, Status Report, etc.
    - **`index_v3_pre_faturamento_2026-05-21.html`** → versão anterior ao módulo Faturamento (banco de horas, billingMode, +Avulsa Kanban). Tem Status Report turbinado.
    - **`index_v3_pre_status_report_2026-05-21.html`** → versão anterior ao Status Report turbinado. Tem visibilidade por projeto, claim, fix de busca.
