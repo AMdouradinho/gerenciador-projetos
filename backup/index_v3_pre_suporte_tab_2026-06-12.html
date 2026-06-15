@@ -1442,7 +1442,7 @@ async function initApp(background=false){
       try{const tm=await readFile(state.fileMap['team.json']);state.team=migrateTeam(tm);}catch(e){state.team=migrateTeam({});}
     } else {state.team=migrateTeam({});}
     applyCurrentUserUI();
-    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json'&&n!=='bot_state.json');
+    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json');
     addLog(`Carregando ${pFiles.length} projeto(s)...`);
     // Lê cada projeto, salva SNAPSHOT do JSON cru antes de migrar (pra eventual rollback de dados)
     const rawAndFlags=await Promise.all(pFiles.map(async fname=>{
@@ -2846,6 +2846,7 @@ function showUserMenu(){
       <button class="btn" onclick="document.getElementById('user-menu-overlay').remove();showClientsManager()">📁 Clientes</button>
       <button class="btn" onclick="document.getElementById('user-menu-overlay').remove();showTeamManager()">👥 Equipe</button>
       <button class="btn" onclick="document.getElementById('user-menu-overlay').remove();refreshFromDrive()">⟲ Sincronizar com Drive</button>
+      <button class="btn" onclick="document.getElementById('user-menu-overlay').remove();loadGlpiPreview()" title="MVP — só visualização em memória; nada vai pro Drive">🎫 Preview GLPI (TMG)</button>
       <button class="btn danger" onclick="document.getElementById('user-menu-overlay').remove();handleLogout()">⤴ Sair</button>
     </div>
   </div>`;
@@ -4019,19 +4020,12 @@ function renderPortfolioDashboardPane(){
   const hojeBadge=overdue.length+dueToday.length;
   // Badge "Bloqueios": esperando cliente + promessas estouradas
   const promiseOverdue=waiting.filter(t=>{const open=(t.clientWaitingHistory||[]).find(e=>!e.endedAt);return open&&open.promisedReturn&&open.promisedReturn<today;}).length;
-  // Bloqueios EXCLUI projetos GLPI (eles têm aba própria)
-  const waitingNonGlpi=waiting.filter(t=>{const p=visibleProjects.find(x=>(x.phases||[]).some(ph=>(ph.tasks||[]).includes(t)));return p?.source!=='glpi';});
-  const bloqueiosBadge=waitingNonGlpi.length;
-  // Badge "Suporte": total ativos (não resolvidos) em projetos source=glpi
-  const glpiProjects=visibleProjects.filter(p=>p.source==='glpi');
-  const glpiActiveCount=glpiProjects.flatMap(p=>(p.phases||[]).flatMap(ph=>ph.tasks||[])).filter(t=>!DONE_STATUSES.has(t.status)&&t.status!=='OBSOLETA').length;
-  const suporteBadge=glpiActiveCount;
+  const bloqueiosBadge=waiting.length;
   const tab=state.dashTab||'hoje';
   const tabContent=
     tab==='time'?renderDashTabTime(ctx):
     tab==='portfolio'?renderDashTabPortfolio(ctx):
     tab==='bloqueios'?renderDashTabBloqueios(ctx):
-    tab==='suporte'?renderDashTabSuporte(ctx):
     renderDashTabHoje(ctx);
 
   return `<div class="pane pane-mid">
@@ -4055,7 +4049,6 @@ function renderPortfolioDashboardPane(){
           <button class="dash-tab ${tab==='time'?'active':''}" onclick="setDashTab('time')">👥 Time</button>
           <button class="dash-tab ${tab==='portfolio'?'active':''}" onclick="setDashTab('portfolio')">📊 Portfólio</button>
           <button class="dash-tab ${tab==='bloqueios'?'active':''}" onclick="setDashTab('bloqueios')">🚧 Bloqueios${bloqueiosBadge?` <span class="tab-badge">${bloqueiosBadge}</span>`:''}</button>
-          ${glpiProjects.length?`<button class="dash-tab ${tab==='suporte'?'active':''}" onclick="setDashTab('suporte')">🎫 Suporte${suporteBadge?` <span class="tab-badge">${suporteBadge}</span>`:''}</button>`:''}
         </div>
 
         ${tabContent}
@@ -4266,123 +4259,7 @@ function renderDashTabBloqueios(ctx){
 }
 // Agrega dados de clientWaitingHistory de TODAS as tasks visíveis.
 // Retorna: ativos, encerrados últimos 30d, por cliente, total ciclos, % promessas cumpridas.
-// ═══ ABA: SUPORTE (GLPI) — chamados de projetos source='glpi' ═══
-function renderDashTabSuporte(ctx){
-  const today=new Date().toISOString().slice(0,10);
-  const glpiProjects=ctx.visibleProjects.filter(p=>p.source==='glpi');
-  if(!glpiProjects.length){
-    return `<div style="text-align:center;padding:40px;color:var(--txt3);font-size:13px">Nenhum projeto de suporte GLPI sincronizado.</div>`;
-  }
-  // Agrega tasks
-  const allTasks=[];
-  glpiProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
-    allTasks.push({...t,_proj:p,_phase:ph.name,_phaseId:ph.id});
-  })));
-  const ativos=allTasks.filter(t=>!DONE_STATUSES.has(t.status)&&t.status!=='OBSOLETA');
-  const slaEstourado=allTasks.filter(t=>t._phaseId==='glpi_sla_estourado');
-  const estaSemana=allTasks.filter(t=>t._phaseId==='glpi_esta_semana');
-  const emAndamento=allTasks.filter(t=>t._phaseId==='glpi_em_andamento');
-  const aguardandoCli=allTasks.filter(t=>t._phaseId==='glpi_aguardando_cli');
-  const novos=allTasks.filter(t=>t._phaseId==='glpi_novos');
-  const resolvidos30d=allTasks.filter(t=>t._phaseId==='glpi_resolvidos_30d');
-  // SLA estourado por DFista (lastUpdater)
-  const slaPorPessoa={};
-  slaEstourado.forEach(t=>{
-    const nome=t.assignee||t.glpi?.lastUpdaterName||'sem dono';
-    slaPorPessoa[nome]=(slaPorPessoa[nome]||0)+1;
-  });
-  const slaPorPessoaArr=Object.entries(slaPorPessoa).sort((a,b)=>b[1]-a[1]);
-  // Requerente top (quem mais abre)
-  const porReq={};
-  ativos.forEach(t=>{
-    const r=t.glpi?.requesterName||'?';
-    porReq[r]=(porReq[r]||0)+1;
-  });
-  const topReq=Object.entries(porReq).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  // Última sync
-  const lastSyncAt=glpiProjects[0]?.glpiConfig?.lastSyncAt;
-  const minutesAgo=lastSyncAt?Math.floor((Date.now()-+new Date(lastSyncAt))/60000):null;
-  const ago=minutesAgo===null?'?':minutesAgo<1?'agora':minutesAgo<60?`${minutesAgo} min atrás`:`${Math.floor(minutesAgo/60)}h atrás`;
-
-  return `
-    <div class="kpi-row">
-      <div class="kpi red"><div class="l">SLA estourado</div><div class="v">${slaEstourado.length}</div></div>
-      <div class="kpi amber"><div class="l">Vence esta semana</div><div class="v">${estaSemana.length}</div></div>
-      <div class="kpi purple"><div class="l">Em andamento</div><div class="v">${emAndamento.length}</div></div>
-      <div class="kpi"><div class="l">Aguardando cliente</div><div class="v">${aguardandoCli.length}</div></div>
-      <div class="kpi"><div class="l">Novos</div><div class="v">${novos.length}</div></div>
-      <div class="kpi green"><div class="l">Resolvidos 30d</div><div class="v">${resolvidos30d.length}</div></div>
-    </div>
-
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr">
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>🔥 SLA Estourado · top 8</h3><span class="meta">${slaEstourado.length} total</span></div>
-        ${slaEstourado.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">Nenhum 🎉</div>':slaEstourado.slice().sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')).slice(0,8).map(t=>{
-          const daysOver=t.dueDate?Math.round((+new Date(today)-+new Date(t.dueDate))/86400000):0;
-          return `<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-            <span class="tid">${esc(t.id)}</span>
-            <div class="ttl">${esc(t.title.slice(0,60))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
-            <span class="due overdue">-${daysOver}d</span>
-          </div>`;
-        }).join('')}
-        ${slaEstourado.length>8?`<div style="text-align:center;padding:6px;font-size:10px;color:var(--txt3)">+${slaEstourado.length-8} mais</div>`:''}
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>👥 SLA por responsável</h3><span class="meta">distribuição</span></div>
-        ${slaPorPessoaArr.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':slaPorPessoaArr.map(([nome,cnt])=>{
-          const max=slaPorPessoaArr[0][1];
-          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--bg3);font-size:12px">
-            <div style="flex:1;font-weight:600">${esc(nome)}</div>
-            <div style="background:var(--red-bg);color:var(--red);padding:1px 9px;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700">${cnt}</div>
-            <div style="width:100px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${cnt/max*100}%;background:var(--red)"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr">
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>📅 Vence esta semana</h3><span class="meta">${estaSemana.length}</span></div>
-        ${estaSemana.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">Sem prazos próximos</div>':estaSemana.slice().sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')).slice(0,8).map(t=>{
-          const d=daysUntil(t.dueDate);
-          return `<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-            <span class="tid">${esc(t.id)}</span>
-            <div class="ttl">${esc(t.title.slice(0,60))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
-            <span class="due">${d===0?'hj':d===1?'amanhã':`${d}d`}</span>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>🙋 Quem mais abre chamados</h3><span class="meta">ativos</span></div>
-        ${topReq.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':topReq.map(([nome,cnt])=>{
-          const max=topReq[0][1];
-          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--bg3);font-size:12px">
-            <div style="flex:1">${esc(nome)}</div>
-            <div style="background:var(--bg3);padding:1px 9px;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700">${cnt}</div>
-            <div style="width:100px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${cnt/max*100}%;background:var(--acc)"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="dash-card" style="margin-top:14px">
-      <div class="dash-card-h">
-        <h3>✅ Resolvidos nos últimos 30 dias · ${resolvidos30d.length}</h3>
-        <span class="meta">sync ${ago}</span>
-      </div>
-      ${resolvidos30d.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':resolvidos30d.slice().sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||'')).slice(0,10).map(t=>`<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-        <span class="tid">${esc(t.id)}</span>
-        <div class="ttl">${esc(t.title.slice(0,70))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
-        <span class="due" style="color:var(--green)">${esc((t.completedAt||'').slice(5).split('-').reverse().join('/'))}</span>
-      </div>`).join('')}
-      ${resolvidos30d.length>10?`<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt3)">+${resolvidos30d.length-10} mais</div>`:''}
-    </div>
-  `;
-}
-
 function _clientWaitAggregate(visibleProjects){
-  // Filtra projetos source=glpi (eles têm aba própria 🎫 Suporte; senão duplicaria)
-  visibleProjects=visibleProjects.filter(p=>p.source!=='glpi');
   const today=new Date();today.setHours(0,0,0,0);const todayMs=+today;
   const todayIso=today.toISOString().slice(0,10);
   const ago30=new Date(today);ago30.setDate(ago30.getDate()-30);
@@ -4468,19 +4345,20 @@ function renderGlpiHeaderBanner(proj){
   const lastSync=g.lastSyncAt?new Date(g.lastSyncAt):null;
   const minutesAgo=lastSync?Math.floor((Date.now()-+lastSync)/60000):null;
   const ago=minutesAgo===null?'?':minutesAgo<1?'agora':minutesAgo<60?`${minutesAgo} min atrás`:`${Math.floor(minutesAgo/60)}h atrás`;
-  return `<div style="background:var(--pink-bg);border-bottom:1px solid var(--pink);padding:10px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px">
-    <span style="background:var(--pink);color:#fff;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:1px">🎫 GLPI</span>
-    <span style="font-weight:600;color:var(--txt)">${st.total||0} chamados</span>
+  return `<div style="background:linear-gradient(90deg,#fbe3ef 0%,#fff7fb 100%);border-bottom:1px solid #f5cce0;padding:10px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px">
+    <span style="background:#982a5a;color:#fff;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:1px">🎫 GLPI</span>
+    <span style="font-weight:600">${st.total||0} chamados</span>
     <span style="color:var(--txt3)">·</span>
     <span style="color:var(--red);font-weight:600">🔥 ${st.atrasados||0} SLA estourado</span>
     <span style="color:var(--txt3)">·</span>
     <span style="color:var(--amber);font-weight:600">⏳ ${st.aguardandoCliente||0} aguardando cliente</span>
     <span style="color:var(--txt3)">·</span>
-    <span style="color:var(--purple);font-weight:600">🔄 ${st.emAndamento||0} em andamento</span>
+    <span style="color:var(--purple,#6b4fa8);font-weight:600">🔄 ${st.emAndamento||0} em andamento</span>
     <span style="color:var(--txt3)">·</span>
     <span style="color:var(--green);font-weight:600">✅ ${st.resolvidos30d||0} resolvidos 30d</span>
     <span style="margin-left:auto;color:var(--txt3);font-size:11px">sync ${ago}${g.profileName?` · ${esc(g.profileName)}`:''}</span>
-    <a href="${esc(g.baseUrl||'https://gmti.tmg.agr.br').replace(/\/apirest\.php$/,'')}" target="_blank" rel="noopener" style="background:var(--pink);color:#fff;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">🎫 Abrir GLPI</a>
+    <a href="portal/tmg-suporte.html" target="_blank" rel="noopener" style="background:#982a5a;color:#fff;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">📊 Portal Suporte</a>
+    <a href="${esc(g.baseUrl||'https://gmti.tmg.agr.br').replace(/\/apirest\.php$/,'')}" target="_blank" rel="noopener" style="background:var(--acc);color:#fff;padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none">🎫 GLPI</a>
   </div>`;
 }
 function renderProjectDetailPane(proj){
@@ -4630,18 +4508,18 @@ function onEditBlur(el){
 function renderTaskGlpiSection(proj,phase,task){
   if(task.source!=='glpi'||!task.glpi) return '';
   const g=task.glpi;const url=g.url||`https://gmti.tmg.agr.br/front/ticket.form.php?id=${g.ticketId}`;
-  return `<div class="td-section" style="background:var(--pink-bg);border:1px solid var(--pink);border-radius:8px;padding:12px 14px">
-    <h4 style="margin-bottom:8px;color:var(--pink)">🎫 Chamado GLPI #${esc(String(g.ticketId))}</h4>
+  return `<div class="td-section" style="background:linear-gradient(to right,#fbe3ef 0%,var(--bg2) 60%);border-radius:8px;padding:10px 14px">
+    <h4 style="margin-bottom:8px">🎫 Chamado GLPI #${esc(String(g.ticketId))}</h4>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:11px">
-      <span style="color:var(--txt3)">Prioridade</span><span style="font-weight:600;color:var(--txt)">${esc(g.priorityLabel||g.priority||'—')}</span>
-      <span style="color:var(--txt3)">Urgência</span><span style="color:var(--txt)">${esc(g.urgencyLabel||g.urgency||'—')}</span>
-      <span style="color:var(--txt3)">Impacto</span><span style="color:var(--txt)">${esc(g.impactLabel||g.impact||'—')}</span>
-      <span style="color:var(--txt3)">Followups</span><span style="color:var(--txt)">${g._followupsCount||0}</span>
-      <span style="color:var(--txt3)">Tasks GLPI</span><span style="color:var(--txt)">${g._tasksCount||0}</span>
-      <span style="color:var(--txt3)">Atualizado</span><span style="color:var(--txt)">${esc((g.date_mod||'').slice(0,16))}</span>
+      <span style="color:var(--txt3)">Prioridade</span><span style="font-weight:600">${esc(g.priorityLabel||g.priority||'—')}</span>
+      <span style="color:var(--txt3)">Urgência</span><span>${esc(g.urgencyLabel||g.urgency||'—')}</span>
+      <span style="color:var(--txt3)">Impacto</span><span>${esc(g.impactLabel||g.impact||'—')}</span>
+      <span style="color:var(--txt3)">Followups</span><span>${g._followupsCount||0}</span>
+      <span style="color:var(--txt3)">Tasks GLPI</span><span>${g._tasksCount||0}</span>
+      <span style="color:var(--txt3)">Atualizado</span><span>${esc((g.date_mod||'').slice(0,16))}</span>
     </div>
     <div style="margin-top:10px">
-      <a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:var(--pink);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">Abrir no GLPI →</a>
+      <a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:var(--acc);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">Abrir no GLPI →</a>
     </div>
   </div>`;
 }
