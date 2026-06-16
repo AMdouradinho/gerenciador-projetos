@@ -4303,6 +4303,10 @@ function renderDashTabSuporte(ctx){
   const lastSyncAt=glpiProjects[0]?.glpiConfig?.lastSyncAt;
   const minutesAgo=lastSyncAt?Math.floor((Date.now()-+new Date(lastSyncAt))/60000):null;
   const ago=minutesAgo===null?'?':minutesAgo<1?'agora':minutesAgo<60?`${minutesAgo} min atrás`:`${Math.floor(minutesAgo/60)}h atrás`;
+  // Tempo médio de resposta DF (calculado no sync)
+  const avgRespH=glpiProjects[0]?.glpiConfig?.avgResponseHours;
+  const respSample=glpiProjects[0]?.glpiConfig?.responseSampleSize;
+  const avgRespTxt=(typeof avgRespH==='number')?(avgRespH>=24?`${(avgRespH/24).toFixed(1)}d`:`${avgRespH}h`):'—';
 
   return `
     <div class="kpi-row">
@@ -4312,6 +4316,7 @@ function renderDashTabSuporte(ctx){
       <div class="kpi"><div class="l">Aguardando cliente</div><div class="v">${aguardandoCli.length}</div></div>
       <div class="kpi"><div class="l">Novos</div><div class="v">${novos.length}</div></div>
       <div class="kpi green"><div class="l">Resolvidos 30d</div><div class="v">${resolvidos30d.length}</div></div>
+      <div class="kpi" title="Tempo médio até a primeira resposta da equipe DF (amostra: ${respSample||0} chamados)"><div class="l">⏱ Resposta DF</div><div class="v">${avgRespTxt}</div></div>
     </div>
 
     <div class="dash-grid" style="grid-template-columns:1fr 1fr">
@@ -4643,7 +4648,51 @@ function renderTaskGlpiSection(proj,phase,task){
     <div style="margin-top:10px">
       <a href="${esc(url)}" target="_blank" rel="noopener" style="display:inline-block;background:var(--pink);color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">Abrir no GLPI →</a>
     </div>
+    ${renderTaskGlpiTimeline(task)}
   </div>`;
+}
+// Timeline visual do ticket: criação → cada followup → solução.
+// Lê task.activityLog (já sincronizado dos followups do GLPI) + task.startDate (date_creation)
+// + task.completedAt/g.solvedate (solução).
+function renderTaskGlpiTimeline(task){
+  const g=task.glpi||{};
+  const events=[];
+  if(task.startDate) events.push({at:task.startDate+'T00:00:00',kind:'create',who:g.requesterName||'',text:'Chamado aberto'});
+  (task.activityLog||[]).forEach(e=>{
+    const isPrivate=(e.text||'').startsWith('🔒');
+    const whoRaw=(e.who||'').replace(/^glpi:/,'');
+    events.push({at:e.at,kind:isPrivate?'private':'followup',who:whoRaw,text:(e.text||'').replace(/^[🔒💬]\s*/,'')});
+  });
+  if(task.completedAt||g.solvedate){
+    events.push({at:(g.solvedate||task.completedAt+'T00:00:00'),kind:'solved',who:'',text:'Chamado solucionado'});
+  }
+  if(events.length<2) return '';
+  events.sort((a,b)=>(a.at||'').localeCompare(b.at||''));
+  const fmt=at=>{
+    if(!at) return '—';
+    const d=at.slice(0,10).split('-').reverse().join('/');
+    const h=at.slice(11,16);
+    return h?`${d} ${h}`:d;
+  };
+  const iconOf=k=>k==='create'?'🆕':k==='solved'?'✅':k==='private'?'🔒':'💬';
+  const colorOf=k=>k==='create'?'var(--pink)':k==='solved'?'var(--green,#16a34a)':k==='private'?'var(--txt3)':'var(--txt2)';
+  const rows=events.map((e,i)=>{
+    const last=i===events.length-1;
+    return `<div style="display:flex;gap:10px;font-size:11px;line-height:1.45">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+        <span style="font-size:13px;line-height:1">${iconOf(e.kind)}</span>
+        ${last?'':`<span style="flex:1;width:1px;background:var(--bg3);margin:2px 0;min-height:14px"></span>`}
+      </div>
+      <div style="flex:1;min-width:0;padding-bottom:${last?'0':'8px'}">
+        <div style="color:${colorOf(e.kind)};font-weight:600;font-size:10px">${fmt(e.at)}${e.who?` · ${esc(e.who)}`:''}</div>
+        <div style="color:var(--txt);word-wrap:break-word;white-space:pre-wrap">${esc((e.text||'').slice(0,300))}${(e.text||'').length>300?'…':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<details style="margin-top:12px;border-top:1px solid var(--pink);padding-top:10px" open>
+    <summary style="cursor:pointer;color:var(--pink);font-weight:600;font-size:12px;margin-bottom:8px;outline:none">📜 Timeline (${events.length} eventos)</summary>
+    <div style="display:flex;flex-direction:column">${rows}</div>
+  </details>`;
 }
 // Bloco do detail-pane mostrando histórico de pendências de cliente (todos os ciclos).
 function renderTaskClientWaitSection(proj,phase,task){
