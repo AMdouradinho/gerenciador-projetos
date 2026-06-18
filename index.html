@@ -4520,12 +4520,14 @@ function glpiOpenRespond(ticketId, title){
         </label>
         <span id="glpi-resp-files-list" style="font-size:11px;color:var(--txt3);margin-left:8px"></span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
         <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
           <input type="checkbox" id="glpi-resp-private"> 🔒 Privado (só técnicos)
         </label>
-        <div style="margin-left:auto;display:flex;gap:6px">
+        <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn ghost" onclick="this.closest('[data-modal-root]').remove()">Cancelar</button>
+          <button class="btn" title="Pendente (aguardando cliente) + posta o texto" onclick="glpiChangeStatus(${ticketId},'aguardando')">⏳ Aguardando cliente</button>
+          <button class="btn" title="Marca como Solucionado usando o texto como solução" onclick="glpiChangeStatus(${ticketId},'solucionado')">✅ Solucionar</button>
           <button class="btn primary" id="glpi-resp-send" onclick="glpiSubmitRespond(${ticketId})">Enviar</button>
         </div>
       </div>
@@ -4535,6 +4537,38 @@ function glpiOpenRespond(ticketId, title){
   document.body.appendChild(modal);
   modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
   setTimeout(()=>document.getElementById('glpi-resp-text')?.focus(),50);
+}
+async function glpiChangeStatus(ticketId, status){
+  const text=document.getElementById('glpi-resp-text').value.trim();
+  const status_el=document.getElementById('glpi-resp-status');
+  // Solucionar exige solução escrita
+  if(status==='solucionado' && !text){
+    status_el.innerHTML='<span style="color:var(--red)">Pra solucionar, escreve a solução no texto acima</span>';
+    return;
+  }
+  if(!confirm(status==='solucionado' ? 'Solucionar este chamado? (vai gravar a solução)' : 'Mudar status pra Aguardando Cliente?')) return;
+  let token=state.settings?.glpiAppToken || localStorage.getItem('pm_app_respond_token');
+  if(!token){token=prompt('Token PM_APP_RESPOND_TOKEN:');if(!token)return;localStorage.setItem('pm_app_respond_token',token.trim());}
+  status_el.innerHTML='<span style="color:var(--txt2)">⏳ Aplicando…</span>';
+  document.querySelectorAll('[data-modal-root] button').forEach(b=>b.disabled=true);
+  try{
+    const r=await fetch('https://pm-mcp.dfsistemas.agr.br/api/glpi/status',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.trim()},
+      body:JSON.stringify({ticketId,status,note:text||undefined,actorName:state.currentUserName||state.currentUserEmail||''})
+    });
+    const data=await r.json();
+    if(!r.ok){
+      status_el.innerHTML='<span style="color:var(--red)">Erro: '+esc(data.error||r.status)+'</span>';
+      document.querySelectorAll('[data-modal-root] button').forEach(b=>b.disabled=false);
+      return;
+    }
+    status_el.innerHTML='<span style="color:var(--green)">✓ Status atualizado! Próximo sync (até 15min) reflete aqui.</span>';
+    setTimeout(()=>document.querySelector('[data-modal-root]')?.remove(),1800);
+  }catch(e){
+    status_el.innerHTML='<span style="color:var(--red)">Erro: '+esc(e.message)+'</span>';
+    document.querySelectorAll('[data-modal-root] button').forEach(b=>b.disabled=false);
+  }
 }
 function glpiUpdateAttachList(){
   const inp=document.getElementById('glpi-resp-files');
@@ -4565,6 +4599,7 @@ async function glpiSubmitRespond(ticketId){
     fd.append('ticketId',String(ticketId));
     fd.append('content',text);
     fd.append('isPrivate',isPrivate?'true':'false');
+    fd.append('actorName',state.currentUserName||state.currentUserEmail||'');
     files.forEach(f=>fd.append('files',f,f.name));
     const r=await fetch('https://pm-mcp.dfsistemas.agr.br/api/glpi/respond',{
       method:'POST',
