@@ -4267,122 +4267,274 @@ function renderDashTabBloqueios(ctx){
 // Agrega dados de clientWaitingHistory de TODAS as tasks visíveis.
 // Retorna: ativos, encerrados últimos 30d, por cliente, total ciclos, % promessas cumpridas.
 // ═══ ABA: SUPORTE (GLPI) — chamados de projetos source='glpi' ═══
+// Estado dos filtros (persistido em memória durante a sessão)
+if(!state.suporteFilters) state.suporteFilters={q:'',resp:'',status:'',phaseKpi:'',showDf:true,showTmg:false,showSem:true};
+if(!state.suporteExpanded) state.suporteExpanded=new Set();
+
+function suporteUpdateFilter(key,val){
+  state.suporteFilters[key]=val;
+  render();
+}
+function suporteKpiToggle(phaseId){
+  state.suporteFilters.phaseKpi = state.suporteFilters.phaseKpi===phaseId ? '' : phaseId;
+  render();
+}
+function suporteToggleExpand(taskId){
+  if(state.suporteExpanded.has(taskId)) state.suporteExpanded.delete(taskId);
+  else state.suporteExpanded.add(taskId);
+  render();
+}
+
 function renderDashTabSuporte(ctx){
   const today=new Date().toISOString().slice(0,10);
   const glpiProjects=ctx.visibleProjects.filter(p=>p.source==='glpi');
   if(!glpiProjects.length){
     return `<div style="text-align:center;padding:40px;color:var(--txt3);font-size:13px">Nenhum projeto de suporte GLPI sincronizado.</div>`;
   }
-  // Agrega tasks
   const allTasks=[];
   glpiProjects.forEach(p=>(p.phases||[]).forEach(ph=>(ph.tasks||[]).forEach(t=>{
     allTasks.push({...t,_proj:p,_phase:ph.name,_phaseId:ph.id});
   })));
-  const ativos=allTasks.filter(t=>!DONE_STATUSES.has(t.status)&&t.status!=='OBSOLETA');
-  const slaEstourado=allTasks.filter(t=>t._phaseId==='glpi_sla_estourado');
-  const estaSemana=allTasks.filter(t=>t._phaseId==='glpi_esta_semana');
-  const emAndamento=allTasks.filter(t=>t._phaseId==='glpi_em_andamento');
-  const aguardandoCli=allTasks.filter(t=>t._phaseId==='glpi_aguardando_cli');
-  const novos=allTasks.filter(t=>t._phaseId==='glpi_novos');
-  const resolvidos30d=allTasks.filter(t=>t._phaseId==='glpi_resolvidos_30d');
-  // SLA estourado por DFista (lastUpdater)
-  const slaPorPessoa={};
-  slaEstourado.forEach(t=>{
-    const nome=t.assignee||t.glpi?.lastUpdaterName||'sem dono';
-    slaPorPessoa[nome]=(slaPorPessoa[nome]||0)+1;
-  });
-  const slaPorPessoaArr=Object.entries(slaPorPessoa).sort((a,b)=>b[1]-a[1]);
-  // Requerente top (quem mais abre)
-  const porReq={};
-  ativos.forEach(t=>{
-    const r=t.glpi?.requesterName||'?';
-    porReq[r]=(porReq[r]||0)+1;
-  });
-  const topReq=Object.entries(porReq).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  // Última sync
+  const PH={sla:'glpi_sla_estourado',semana:'glpi_esta_semana',and:'glpi_em_andamento',ag:'glpi_aguardando_cli',novos:'glpi_novos',resolv:'glpi_resolvidos_30d'};
+  const cnt = phId => allTasks.filter(t=>t._phaseId===phId).length;
+
+  // KPIs
   const lastSyncAt=glpiProjects[0]?.glpiConfig?.lastSyncAt;
   const minutesAgo=lastSyncAt?Math.floor((Date.now()-+new Date(lastSyncAt))/60000):null;
-  const ago=minutesAgo===null?'?':minutesAgo<1?'agora':minutesAgo<60?`${minutesAgo} min atrás`:`${Math.floor(minutesAgo/60)}h atrás`;
-  // Tempo médio de resposta DF (calculado no sync)
+  const ago=minutesAgo===null?'?':minutesAgo<1?'agora':minutesAgo<60?`${minutesAgo} min`:`${Math.floor(minutesAgo/60)}h`;
   const avgRespH=glpiProjects[0]?.glpiConfig?.avgResponseHours;
   const respSample=glpiProjects[0]?.glpiConfig?.responseSampleSize;
   const avgRespTxt=(typeof avgRespH==='number')?(avgRespH>=24?`${(avgRespH/24).toFixed(1)}d`:`${avgRespH}h`):'—';
+  const filt=state.suporteFilters;
+  const kpiCls = phId => filt.phaseKpi===phId ? 'kpi active' : 'kpi';
 
-  return `
+  // Filtragem
+  const respOptions=new Set();
+  allTasks.forEach(t=>{ if(t.assignee) respOptions.add(t.assignee); });
+  const respList=[...respOptions].sort();
+
+  let listed = allTasks.filter(t=>{
+    if(t._phaseId===PH.resolv) return false; // resolvidos têm seção própria
+    const isTmg = !!t.glpi?.tmgInternoOwner;
+    const isSem = !t.assignee && !isTmg;
+    const isDf  = !!t.assignee && !isTmg;
+    if(isDf && !filt.showDf) return false;
+    if(isTmg && !filt.showTmg) return false;
+    if(isSem && !filt.showSem) return false;
+    if(filt.phaseKpi && t._phaseId!==filt.phaseKpi) return false;
+    if(filt.resp){
+      if(filt.resp==='__sem__'){ if(t.assignee || isTmg) return false; }
+      else if(filt.resp==='__tmg__'){ if(!isTmg) return false; }
+      else if(t.assignee!==filt.resp) return false;
+    }
+    if(filt.status && t._phaseId!==filt.status) return false;
+    if(filt.q){
+      const q=filt.q.toLowerCase();
+      const hay=`${t.id} ${t.title} ${t.glpi?.requesterName||''} ${t.assignee||''} ${t.glpi?.tmgInternoOwner||''}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  // Ordena: SLA primeiro, depois por dueDate
+  const PH_ORDER={[PH.sla]:0,[PH.semana]:1,[PH.and]:2,[PH.ag]:3,[PH.novos]:4};
+  listed.sort((a,b)=>(PH_ORDER[a._phaseId]??9)-(PH_ORDER[b._phaseId]??9) || (a.dueDate||'').localeCompare(b.dueDate||''));
+
+  const resolvidos = allTasks.filter(t=>t._phaseId===PH.resolv).slice().sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||''));
+
+  // Render KPI bar — clicáveis
+  const kpiHtml = `
     <div class="kpi-row">
-      <div class="kpi red"><div class="l">SLA estourado</div><div class="v">${slaEstourado.length}</div></div>
-      <div class="kpi amber"><div class="l">Vence esta semana</div><div class="v">${estaSemana.length}</div></div>
-      <div class="kpi purple"><div class="l">Em andamento</div><div class="v">${emAndamento.length}</div></div>
-      <div class="kpi"><div class="l">Aguardando cliente</div><div class="v">${aguardandoCli.length}</div></div>
-      <div class="kpi"><div class="l">Novos</div><div class="v">${novos.length}</div></div>
-      <div class="kpi green"><div class="l">Resolvidos 30d</div><div class="v">${resolvidos30d.length}</div></div>
-      <div class="kpi" title="Tempo médio até a primeira resposta da equipe DF (amostra: ${respSample||0} chamados)"><div class="l">⏱ Resposta DF</div><div class="v">${avgRespTxt}</div></div>
-    </div>
+      <div class="${kpiCls(PH.sla)} red" onclick="suporteKpiToggle('${PH.sla}')"><div class="l">SLA estourado</div><div class="v">${cnt(PH.sla)}</div></div>
+      <div class="${kpiCls(PH.semana)} amber" onclick="suporteKpiToggle('${PH.semana}')"><div class="l">Vence semana</div><div class="v">${cnt(PH.semana)}</div></div>
+      <div class="${kpiCls(PH.and)} purple" onclick="suporteKpiToggle('${PH.and}')"><div class="l">Em andamento</div><div class="v">${cnt(PH.and)}</div></div>
+      <div class="${kpiCls(PH.ag)}" onclick="suporteKpiToggle('${PH.ag}')"><div class="l">Aguardando cli</div><div class="v">${cnt(PH.ag)}</div></div>
+      <div class="${kpiCls(PH.novos)}" onclick="suporteKpiToggle('${PH.novos}')"><div class="l">Novos</div><div class="v">${cnt(PH.novos)}</div></div>
+      <div class="kpi green"><div class="l">Resolvidos 30d</div><div class="v">${cnt(PH.resolv)}</div></div>
+      <div class="kpi" title="Tempo médio até a primeira resposta DF (amostra: ${respSample||0})"><div class="l">⏱ Resposta DF</div><div class="v">${avgRespTxt}</div></div>
+    </div>`;
 
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr">
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>🔥 SLA Estourado · top 8</h3><span class="meta">${slaEstourado.length} total</span></div>
-        ${slaEstourado.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">Nenhum 🎉</div>':slaEstourado.slice().sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')).slice(0,8).map(t=>{
-          const daysOver=t.dueDate?Math.round((+new Date(today)-+new Date(t.dueDate))/86400000):0;
-          return `<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-            <span class="tid">${esc(t.id)}</span>
-            <div class="ttl">${esc(t.title.slice(0,60))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
-            <span class="due overdue">-${daysOver}d</span>
-          </div>`;
-        }).join('')}
-        ${slaEstourado.length>8?`<div style="text-align:center;padding:6px;font-size:10px;color:var(--txt3)">+${slaEstourado.length-8} mais</div>`:''}
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>👥 SLA por responsável</h3><span class="meta">distribuição</span></div>
-        ${slaPorPessoaArr.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':slaPorPessoaArr.map(([nome,cnt])=>{
-          const max=slaPorPessoaArr[0][1];
-          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--bg3);font-size:12px">
-            <div style="flex:1;font-weight:600">${esc(nome)}</div>
-            <div style="background:var(--red-bg);color:var(--red);padding:1px 9px;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700">${cnt}</div>
-            <div style="width:100px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${cnt/max*100}%;background:var(--red)"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
+  // Filtros
+  const filterBar = `
+    <div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <input type="text" value="${esc(filt.q)}" placeholder="🔍 Buscar ID, título, cliente, responsável..." style="flex:1;min-width:240px;background:var(--bg);border:1px solid var(--bg3);border-radius:6px;padding:7px 11px;color:var(--txt);font-size:13px" oninput="suporteUpdateFilter('q',this.value)">
+      <select onchange="suporteUpdateFilter('resp',this.value)" style="background:var(--bg);border:1px solid var(--bg3);border-radius:6px;padding:6px 10px;color:var(--txt);font-size:12px">
+        <option value="" ${!filt.resp?'selected':''}>Resp: todos</option>
+        ${respList.map(r=>`<option value="${esc(r)}" ${filt.resp===r?'selected':''}>${esc(r)}</option>`).join('')}
+        <option value="__tmg__" ${filt.resp==='__tmg__'?'selected':''}>🏢 TMG interno</option>
+        <option value="__sem__" ${filt.resp==='__sem__'?'selected':''}>— sem dono</option>
+      </select>
+      <select onchange="suporteUpdateFilter('status',this.value)" style="background:var(--bg);border:1px solid var(--bg3);border-radius:6px;padding:6px 10px;color:var(--txt);font-size:12px">
+        <option value="" ${!filt.status?'selected':''}>Status: todos</option>
+        <option value="${PH.sla}" ${filt.status===PH.sla?'selected':''}>🔥 SLA estourado</option>
+        <option value="${PH.semana}" ${filt.status===PH.semana?'selected':''}>📅 Vence semana</option>
+        <option value="${PH.and}" ${filt.status===PH.and?'selected':''}>🔄 Em andamento</option>
+        <option value="${PH.ag}" ${filt.status===PH.ag?'selected':''}>⏳ Aguardando cli</option>
+        <option value="${PH.novos}" ${filt.status===PH.novos?'selected':''}>🆕 Novos</option>
+      </select>
+      <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showDf?'checked':''} onchange="suporteUpdateFilter('showDf',this.checked)"> DF</label>
+      <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showTmg?'checked':''} onchange="suporteUpdateFilter('showTmg',this.checked)"> 🏢 TMG</label>
+      <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showSem?'checked':''} onchange="suporteUpdateFilter('showSem',this.checked)"> Sem dono</label>
+      <span style="color:var(--txt3);font-size:11px;margin-left:auto">${listed.length}/${allTasks.filter(t=>t._phaseId!==PH.resolv).length} · sync ${ago}</span>
+    </div>`;
 
-    <div class="dash-grid" style="grid-template-columns:1fr 1fr">
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>📅 Vence esta semana</h3><span class="meta">${estaSemana.length}</span></div>
-        ${estaSemana.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">Sem prazos próximos</div>':estaSemana.slice().sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||'')).slice(0,8).map(t=>{
-          const d=daysUntil(t.dueDate);
-          return `<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
-            <span class="tid">${esc(t.id)}</span>
-            <div class="ttl">${esc(t.title.slice(0,60))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
-            <span class="due">${d===0?'hj':d===1?'amanhã':`${d}d`}</span>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="dash-card">
-        <div class="dash-card-h"><h3>🙋 Quem mais abre chamados</h3><span class="meta">ativos</span></div>
-        ${topReq.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':topReq.map(([nome,cnt])=>{
-          const max=topReq[0][1];
-          return `<div style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--bg3);font-size:12px">
-            <div style="flex:1">${esc(nome)}</div>
-            <div style="background:var(--bg3);padding:1px 9px;border-radius:10px;font-family:var(--mono);font-size:11px;font-weight:700">${cnt}</div>
-            <div style="width:100px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${cnt/max*100}%;background:var(--acc)"></div></div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
+  // Badges por fase
+  const phaseBadge = phId => {
+    const map={
+      [PH.sla]:    ['🔥 SLA',          'background:rgba(248,81,73,.2);color:var(--red)'],
+      [PH.semana]: ['📅 Vence semana', 'background:rgba(210,153,34,.2);color:var(--amber)'],
+      [PH.and]:    ['🔄 Em and.',      'background:rgba(163,113,247,.2);color:var(--purple)'],
+      [PH.ag]:     ['⏳ Ag. cli.',     'background:rgba(210,153,34,.2);color:var(--amber)'],
+      [PH.novos]:  ['🆕 Novo',         'background:rgba(88,166,255,.2);color:var(--blue,#58a6ff)']
+    };
+    const [lbl,style]=map[phId]||[phId,''];
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;${style}">${lbl}</span>`;
+  };
 
+  // Card de ticket
+  const ticketCard = t => {
+    const expanded=state.suporteExpanded.has(t.id);
+    const tmg=t.glpi?.tmgInternoOwner;
+    const respBadge = tmg
+      ? `<span style="display:inline-block;background:var(--amber-bg,#3a2e10);color:var(--amber);border:1px solid var(--amber);padding:1px 8px;border-radius:10px;font-size:10px;font-weight:600">🏢 ${esc(tmg)}</span>`
+      : (t.assignee ? `<strong style="color:var(--txt)">${esc(t.assignee)}</strong>` : `<span style="color:var(--txt3)">— sem dono</span>`);
+    const daysOver = t.dueDate?Math.round((+new Date(today)-+new Date(t.dueDate))/86400000):null;
+    const dueStr = !t.dueDate ? '—' : (daysOver>0 ? `vencido há ${daysOver}d` : daysOver===0 ? 'vence hoje' : `vence em ${-daysOver}d`);
+    const dueColor = !t.dueDate ? 'var(--txt3)' : (daysOver>0 ? 'var(--red)' : (daysOver<=2 ? 'var(--amber)' : 'var(--txt2)'));
+    const reqName = t.glpi?.requesterName || '—';
+    const url = t.glpi?.url || `https://gmti.tmg.agr.br/front/ticket.form.php?id=${t.glpi?.ticketId}`;
+    const tid = t.glpi?.ticketId;
+    const titleEsc = esc(t.title.slice(0,90));
+    // timeline inline (últimos 5)
+    const tlEvents = (t.activityLog||[]).slice().sort((a,b)=>(b.at||'').localeCompare(a.at||'')).slice(0,5);
+    const dfNamesLower = new Set();
+    (state.team?.members||[]).forEach(m=>{ if(m.glpiUserName) dfNamesLower.add(m.glpiUserName.toLowerCase()); });
+    const tlHtml = expanded ? `
+      <div style="border-top:1px solid var(--bg3);padding:10px 14px;background:rgba(0,0,0,.18)">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">📜 Timeline (${(t.activityLog||[]).length} eventos · mostrando últimos ${tlEvents.length})</div>
+        ${tlEvents.length===0?'<div style="color:var(--txt3);font-size:11px;text-align:center;padding:8px">Sem followups ainda</div>':tlEvents.map(e=>{
+          const who=(e.who||'').replace(/^glpi:/,'');
+          const isDf=dfNamesLower.has(who.toLowerCase());
+          const isPrivate=(e.text||'').startsWith('🔒');
+          const icon = isDf?'🟢':(isPrivate?'🔒':'💬');
+          const cleanText=(e.text||'').replace(/^[🔒💬]\s*/,'').slice(0,260);
+          return `<div style="display:flex;gap:10px;padding:6px 0;font-size:11px;border-bottom:1px solid var(--bg3);${isDf?'background:rgba(58,30,48,.25);margin:4px -8px;padding:6px 8px;border-radius:4px':''}">
+            <div style="font-size:13px">${icon}</div>
+            <div style="flex:1;min-width:0">
+              <div style="color:var(--txt3);font-size:10px;margin-bottom:2px"><strong style="color:var(--txt2)">${esc(who)}</strong> · ${esc((e.at||'').slice(0,16))}</div>
+              <div style="color:var(--txt2);white-space:pre-wrap;word-wrap:break-word">${esc(cleanText)}${(e.text||'').length>260?'…':''}</div>
+            </div>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn ghost" style="font-size:11px" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">📂 Abrir no detail-pane</button>
+          <a class="btn ghost" style="font-size:11px;text-decoration:none" href="${esc(url)}" target="_blank">↗ GLPI</a>
+          ${tmg?'':`<button class="btn primary" style="font-size:11px" onclick="glpiOpenRespond(${tid},'${esc(titleEsc).replace(/'/g,'&apos;')}')">💬 Responder no GLPI</button>`}
+        </div>
+      </div>` : '';
+
+    return `<div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;overflow:hidden;margin-bottom:6px">
+      <div style="padding:10px 14px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;cursor:pointer" onclick="suporteToggleExpand('${esc(t.id)}')">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--txt3);min-width:60px">GLPI.${tid}</div>
+        <div style="min-width:0">
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            ${phaseBadge(t._phaseId)} <span>${titleEsc}</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt2);display:flex;gap:14px;flex-wrap:wrap">
+            <span>👤 <strong style="color:var(--txt)">${esc(reqName)}</strong></span>
+            <span>Resp: ${respBadge}</span>
+            <span style="color:${dueColor}">${dueStr}</span>
+          </div>
+        </div>
+        <div style="color:var(--txt3);font-size:14px">${expanded?'▾':'▸'}</div>
+      </div>
+      ${tlHtml}
+    </div>`;
+  };
+
+  const listHtml = listed.length===0
+    ? '<div style="text-align:center;padding:30px;color:var(--txt3);font-size:12px">Nada com esses filtros 🤷</div>'
+    : listed.map(ticketCard).join('');
+
+  // Resolvidos 30d (colapsável)
+  const resolvOpen = state.suporteFilters.resolvOpen;
+  const resolvSection = `
     <div class="dash-card" style="margin-top:14px">
-      <div class="dash-card-h">
-        <h3>✅ Resolvidos nos últimos 30 dias · ${resolvidos30d.length}</h3>
+      <div class="dash-card-h" style="cursor:pointer" onclick="state.suporteFilters.resolvOpen=!state.suporteFilters.resolvOpen;render()">
+        <h3>${resolvOpen?'▾':'▸'} ✅ Resolvidos últimos 30 dias · ${resolvidos.length}</h3>
         <span class="meta">sync ${ago}</span>
       </div>
-      ${resolvidos30d.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':resolvidos30d.slice().sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||'')).slice(0,10).map(t=>`<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
+      ${resolvOpen?(resolvidos.length===0?'<div style="text-align:center;padding:18px;color:var(--txt3);font-size:11px">—</div>':resolvidos.slice(0,15).map(t=>`<div class="upcoming-row" onclick="state.selectedProjId='${esc(t._proj.id)}';state.selectedTaskId='${esc(t.id)}';location.hash='foco';render()">
         <span class="tid">${esc(t.id)}</span>
         <div class="ttl">${esc(t.title.slice(0,70))}<div class="proj-name">${esc(t.glpi?.requesterName||'')}</div></div>
         <span class="due" style="color:var(--green)">${esc((t.completedAt||'').slice(5).split('-').reverse().join('/'))}</span>
-      </div>`).join('')}
-      ${resolvidos30d.length>10?`<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt3)">+${resolvidos30d.length-10} mais</div>`:''}
-    </div>
-  `;
+      </div>`).join('')+(resolvidos.length>15?`<div style="text-align:center;padding:8px;font-size:11px;color:var(--txt3)">+${resolvidos.length-15} mais</div>`:'')):''}
+    </div>`;
+
+  return kpiHtml + filterBar + `<div>${listHtml}</div>` + resolvSection;
+}
+
+// ─── Modal de resposta GLPI ──────────────────────────────────────────────
+// Usa endpoint REST do MCP. Token Bearer fica em localStorage (pedido na primeira vez).
+function glpiOpenRespond(ticketId, title){
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=`
+    <div style="background:var(--bg);border:1px solid var(--bg3);border-radius:10px;padding:20px;max-width:560px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="color:var(--pink);margin:0">💬 Responder #${ticketId}</h3>
+        <button onclick="this.closest('[data-modal]')||this.parentElement.parentElement.parentElement.remove()" style="background:transparent;border:none;color:var(--txt3);font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px">${esc(title||'')}</div>
+      <textarea id="glpi-resp-text" placeholder="Digite sua resposta... (vai pro GLPI como followup do app)" style="width:100%;min-height:120px;background:var(--bg2);border:1px solid var(--bg3);border-radius:6px;padding:10px;color:var(--txt);font:13px/1.4 inherit;resize:vertical"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="glpi-resp-private"> 🔒 Privado (só técnicos)
+        </label>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn ghost" onclick="this.closest('[data-modal-root]').remove()">Cancelar</button>
+          <button class="btn primary" id="glpi-resp-send" onclick="glpiSubmitRespond(${ticketId})">Enviar</button>
+        </div>
+      </div>
+      <div id="glpi-resp-status" style="font-size:11px;color:var(--txt3);margin-top:8px;min-height:14px"></div>
+    </div>`;
+  modal.setAttribute('data-modal-root','');
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  setTimeout(()=>document.getElementById('glpi-resp-text')?.focus(),50);
+}
+async function glpiSubmitRespond(ticketId){
+  const text=document.getElementById('glpi-resp-text').value.trim();
+  const isPrivate=document.getElementById('glpi-resp-private').checked;
+  const status=document.getElementById('glpi-resp-status');
+  if(!text){status.innerHTML='<span style="color:var(--red)">Texto obrigatório</span>';return;}
+  let token=localStorage.getItem('pm_app_respond_token');
+  if(!token){
+    token=prompt('Token PM_APP_RESPOND_TOKEN (peça pro PM/admin):');
+    if(!token)return;
+    localStorage.setItem('pm_app_respond_token',token.trim());
+  }
+  status.innerHTML='<span style="color:var(--txt2)">⏳ Enviando…</span>';
+  const sendBtn=document.getElementById('glpi-resp-send');sendBtn.disabled=true;
+  try{
+    const r=await fetch('https://pm-mcp.dfsistemas.agr.br/api/glpi/respond',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.trim()},
+      body:JSON.stringify({ticketId,content:text,isPrivate})
+    });
+    const data=await r.json();
+    if(!r.ok){
+      if(r.status===401){
+        localStorage.removeItem('pm_app_respond_token');
+        status.innerHTML='<span style="color:var(--red)">Token inválido — limpou cache, tenta de novo</span>';
+      } else status.innerHTML='<span style="color:var(--red)">Erro: '+esc(data.error||r.status)+'</span>';
+      sendBtn.disabled=false;return;
+    }
+    status.innerHTML='<span style="color:var(--green)">✓ Postado! Próximo sync (até 15min) traz pra cá.</span>';
+    setTimeout(()=>document.querySelector('[data-modal-root]')?.remove(),1500);
+  }catch(e){
+    status.innerHTML='<span style="color:var(--red)">Erro de rede: '+esc(e.message)+'</span>';
+    sendBtn.disabled=false;
+  }
 }
 
 function _clientWaitAggregate(visibleProjects){
@@ -4635,8 +4787,10 @@ function onEditBlur(el){
 function renderTaskGlpiSection(proj,phase,task){
   if(task.source!=='glpi'||!task.glpi) return '';
   const g=task.glpi;const url=g.url||`https://gmti.tmg.agr.br/front/ticket.form.php?id=${g.ticketId}`;
+  const tmgBadge=g.tmgInternoOwner?`<div style="margin-bottom:8px;background:var(--amber-bg,#3a2e10);border:1px solid var(--amber,#d4a73d);color:var(--amber,#d4a73d);padding:6px 10px;border-radius:6px;font-size:11px"><strong>🏢 TMG interno</strong> — está com <strong>${esc(g.tmgInternoOwner)}</strong>, não é responsabilidade da equipe DF</div>`:'';
   return `<div class="td-section" style="background:var(--pink-bg);border:1px solid var(--pink);border-radius:8px;padding:12px 14px">
     <h4 style="margin-bottom:8px;color:var(--pink)">🎫 Chamado GLPI #${esc(String(g.ticketId))}</h4>
+    ${tmgBadge}
     <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:11px">
       <span style="color:var(--txt3)">Prioridade</span><span style="font-weight:600;color:var(--txt)">${esc(g.priorityLabel||g.priority||'—')}</span>
       <span style="color:var(--txt3)">Urgência</span><span style="color:var(--txt)">${esc(g.urgencyLabel||g.urgency||'—')}</span>
