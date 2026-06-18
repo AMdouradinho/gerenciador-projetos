@@ -1438,11 +1438,14 @@ async function initApp(background=false){
       addLog(`Atualizando schema de clientes...`);
       saveClients().then(()=>addLog('✓ Schema de clientes atualizado')).catch(e=>console.warn('Migrate clients fail',e));
     }
+    if(state.fileMap['settings.json']){
+      try{state.settings=await readFile(state.fileMap['settings.json']);}catch(e){state.settings={};}
+    } else state.settings={};
     if(state.fileMap['team.json']){
       try{const tm=await readFile(state.fileMap['team.json']);state.team=migrateTeam(tm);}catch(e){state.team=migrateTeam({});}
     } else {state.team=migrateTeam({});}
     applyCurrentUserUI();
-    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json'&&n!=='bot_state.json');
+    const pFiles=Object.keys(state.fileMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json'&&n!=='bot_state.json'&&n!=='settings.json');
     addLog(`Carregando ${pFiles.length} projeto(s)...`);
     // Lê cada projeto, salva SNAPSHOT do JSON cru antes de migrar (pra eventual rollback de dados)
     const rawAndFlags=await Promise.all(pFiles.map(async fname=>{
@@ -1490,7 +1493,7 @@ async function refreshFromDrive(){
     });
     state.fileMap=newMap;
     // GC de projetos órfãos: qualquer projeto cujo `${id}.json` não está mais no Drive (renomeado/deletado/movido pra template) é removido da memória.
-    const validFiles=new Set(Object.keys(newMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json'&&n!=='bot_state.json'));
+    const validFiles=new Set(Object.keys(newMap).filter(n=>n.endsWith('.json')&&!n.startsWith('template_')&&!n.startsWith('pre_migration_backup_')&&!n.startsWith('team_backup_')&&n!=='clients.json'&&n!=='team.json'&&n!=='bot_state.json'&&n!=='settings.json'));
     const before=state.projects.length;
     state.projects=state.projects.filter(p=>p.id==='__template__'||validFiles.has(`${p.id}.json`));
     const removed=before-state.projects.length;
@@ -4519,9 +4522,10 @@ async function glpiSubmitRespond(ticketId){
   const isPrivate=document.getElementById('glpi-resp-private').checked;
   const status=document.getElementById('glpi-resp-status');
   if(!text){status.innerHTML='<span style="color:var(--red)">Texto obrigatório</span>';return;}
-  let token=localStorage.getItem('pm_app_respond_token');
+  // Token vem (em ordem): settings.json no Drive → localStorage (legacy) → prompt
+  let token=state.settings?.glpiAppToken || localStorage.getItem('pm_app_respond_token');
   if(!token){
-    token=prompt('Token PM_APP_RESPOND_TOKEN (peça pro PM/admin):');
+    token=prompt('Token PM_APP_RESPOND_TOKEN não encontrado em settings.json — cola aqui (admin):');
     if(!token)return;
     localStorage.setItem('pm_app_respond_token',token.trim());
   }
