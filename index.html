@@ -4296,7 +4296,19 @@ function renderDashTabSuporte(ctx){
     allTasks.push({...t,_proj:p,_phase:ph.name,_phaseId:ph.id});
   })));
   const PH={sla:'glpi_sla_estourado',semana:'glpi_esta_semana',and:'glpi_em_andamento',ag:'glpi_aguardando_cli',novos:'glpi_novos',resolv:'glpi_resolvidos_30d'};
-  const cnt = phId => allTasks.filter(t=>t._phaseId===phId).length;
+
+  // KPIs respeitam os filtros DF/TMG/Sem dono pra evitar "1 mas nada aparece"
+  const filt0=state.suporteFilters;
+  const passDfTmgSem = t => {
+    const isTmg=!!t.glpi?.tmgInternoOwner;
+    const isSem=!t.assignee && !isTmg;
+    const isDf=!!t.assignee && !isTmg;
+    if(isDf && !filt0.showDf) return false;
+    if(isTmg && !filt0.showTmg) return false;
+    if(isSem && !filt0.showSem) return false;
+    return true;
+  };
+  const cnt = phId => allTasks.filter(t=>t._phaseId===phId && passDfTmgSem(t)).length;
 
   // KPIs
   const lastSyncAt=glpiProjects[0]?.glpiConfig?.lastSyncAt;
@@ -4363,31 +4375,30 @@ function renderDashTabSuporte(ctx){
         <option value="__tmg__" ${filt.resp==='__tmg__'?'selected':''}>🏢 TMG interno</option>
         <option value="__sem__" ${filt.resp==='__sem__'?'selected':''}>— sem dono</option>
       </select>
-      <select onchange="suporteUpdateFilter('status',this.value)" style="background:var(--bg);border:1px solid var(--bg3);border-radius:6px;padding:6px 10px;color:var(--txt);font-size:12px">
-        <option value="" ${!filt.status?'selected':''}>Status: todos</option>
-        <option value="${PH.sla}" ${filt.status===PH.sla?'selected':''}>🔥 SLA estourado</option>
-        <option value="${PH.semana}" ${filt.status===PH.semana?'selected':''}>📅 Vence semana</option>
-        <option value="${PH.and}" ${filt.status===PH.and?'selected':''}>🔄 Em andamento</option>
-        <option value="${PH.ag}" ${filt.status===PH.ag?'selected':''}>⏳ Aguardando cli</option>
-        <option value="${PH.novos}" ${filt.status===PH.novos?'selected':''}>🆕 Novos</option>
-      </select>
       <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showDf?'checked':''} onchange="suporteUpdateFilter('showDf',this.checked)"> DF</label>
       <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showTmg?'checked':''} onchange="suporteUpdateFilter('showTmg',this.checked)"> 🏢 TMG</label>
       <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" ${filt.showSem?'checked':''} onchange="suporteUpdateFilter('showSem',this.checked)"> Sem dono</label>
       <span style="color:var(--txt3);font-size:11px;margin-left:auto">${listed.length}/${allTasks.filter(t=>t._phaseId!==PH.resolv).length} · sync ${ago}</span>
     </div>`;
 
-  // Badges por fase
-  const phaseBadge = phId => {
+  // Badge do STATUS real do chamado (PENDENTE, EM ANDAMENTO, etc) — não confundir com fase
+  const statusBadge = status => {
     const map={
-      [PH.sla]:    ['🔥 SLA',          'background:rgba(248,81,73,.2);color:var(--red)'],
-      [PH.semana]: ['📅 Vence semana', 'background:rgba(210,153,34,.2);color:var(--amber)'],
-      [PH.and]:    ['🔄 Em and.',      'background:rgba(163,113,247,.2);color:var(--purple)'],
-      [PH.ag]:     ['⏳ Ag. cli.',     'background:rgba(210,153,34,.2);color:var(--amber)'],
-      [PH.novos]:  ['🆕 Novo',         'background:rgba(88,166,255,.2);color:var(--blue,#58a6ff)']
+      'PENDENTE':           ['PENDENTE',           'background:rgba(88,166,255,.2);color:var(--blue,#58a6ff)'],
+      'EM ANDAMENTO':       ['EM ANDAMENTO',       'background:rgba(163,113,247,.2);color:var(--purple)'],
+      'AGUARDANDO CLIENTE': ['AGUARDANDO CLIENTE', 'background:rgba(210,153,34,.2);color:var(--amber)'],
+      'CONCLUÍDO':          ['CONCLUÍDO',          'background:rgba(63,185,80,.2);color:var(--green)'],
+      'APROVADO':           ['APROVADO',           'background:rgba(63,185,80,.2);color:var(--green)']
     };
-    const [lbl,style]=map[phId]||[phId,''];
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;${style}">${lbl}</span>`;
+    const [lbl,style]=map[status]||[status,'background:var(--bg3);color:var(--txt2)'];
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.3px;${style}">${lbl}</span>`;
+  };
+  // Marcador lateral (warning) quando algo merece atenção: atrasado, vence próximo, novo
+  const phaseFlag = phId => {
+    if(phId===PH.sla) return `<span title="SLA estourado" style="color:var(--red);font-weight:600">🔥 atrasado</span>`;
+    if(phId===PH.semana) return `<span title="Vence esta semana" style="color:var(--amber)">📅 vence semana</span>`;
+    if(phId===PH.novos) return `<span title="Novo / não triado" style="color:var(--blue,#58a6ff)">🆕 sem triagem</span>`;
+    return '';
   };
 
   // Card de ticket
@@ -4437,12 +4448,13 @@ function renderDashTabSuporte(ctx){
         <div style="font-family:var(--mono);font-size:10px;color:var(--txt3);min-width:60px">GLPI.${tid}</div>
         <div style="min-width:0">
           <div style="font-weight:600;font-size:13px;margin-bottom:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            ${phaseBadge(t._phaseId)} <span>${titleEsc}</span>
+            ${statusBadge(t.status)} <span>${titleEsc}</span>
           </div>
-          <div style="font-size:11px;color:var(--txt2);display:flex;gap:14px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--txt2);display:flex;gap:14px;flex-wrap:wrap;align-items:center">
             <span>👤 <strong style="color:var(--txt)">${esc(reqName)}</strong></span>
             <span>Resp: ${respBadge}</span>
             <span style="color:${dueColor}">${dueStr}</span>
+            ${phaseFlag(t._phaseId)}
           </div>
         </div>
         <div style="color:var(--txt3);font-size:14px">${expanded?'▾':'▸'}</div>
