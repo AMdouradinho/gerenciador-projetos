@@ -4528,6 +4528,7 @@ function glpiOpenRespond(ticketId, title){
           <button class="btn ghost" onclick="this.closest('[data-modal-root]').remove()">Cancelar</button>
           <button class="btn" title="Pendente (aguardando cliente) + posta o texto" onclick="glpiChangeStatus(${ticketId},'aguardando')">⏳ Aguardando cliente</button>
           <button class="btn" title="Marca como Solucionado usando o texto como solução" onclick="glpiChangeStatus(${ticketId},'solucionado')">✅ Solucionar</button>
+          <button class="btn" title="Fecha o chamado definitivamente (após cliente aprovar solução)" onclick="glpiChangeStatus(${ticketId},'fechado')">🏁 Fechar</button>
           <button class="btn primary" id="glpi-resp-send" onclick="glpiSubmitRespond(${ticketId})">Enviar</button>
         </div>
       </div>
@@ -4546,7 +4547,11 @@ async function glpiChangeStatus(ticketId, status){
     status_el.innerHTML='<span style="color:var(--red)">Pra solucionar, escreve a solução no texto acima</span>';
     return;
   }
-  if(!confirm(status==='solucionado' ? 'Solucionar este chamado? (vai gravar a solução)' : 'Mudar status pra Aguardando Cliente?')) return;
+  const confirmMsg = status==='solucionado' ? 'Solucionar este chamado? (vai gravar a solução)'
+    : status==='fechado' ? 'Fechar este chamado definitivamente? (geralmente após cliente aprovar)'
+    : status==='aguardando' ? 'Mudar status pra Aguardando Cliente?'
+    : `Mudar status pra ${status}?`;
+  if(!confirm(confirmMsg)) return;
   let token=state.settings?.glpiAppToken || localStorage.getItem('pm_app_respond_token');
   if(!token){token=prompt('Token PM_APP_RESPOND_TOKEN:');if(!token)return;localStorage.setItem('pm_app_respond_token',token.trim());}
   status_el.innerHTML='<span style="color:var(--txt2)">⏳ Aplicando…</span>';
