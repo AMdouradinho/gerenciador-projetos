@@ -4422,8 +4422,20 @@ function renderDashTabSuporte(ctx){
     const tlEvents = (t.activityLog||[]).slice().sort((a,b)=>(b.at||'').localeCompare(a.at||'')).slice(0,5);
     const dfNamesLower = new Set();
     (state.team?.members||[]).forEach(m=>{ if(m.glpiUserName) dfNamesLower.add(m.glpiUserName.toLowerCase()); });
+    // Anexos do ticket (read — vem do sync)
+    const atts=t.glpi?.attachments||[];
+    const attsHtml = atts.length ? `
+      <div style="font-size:10px;color:var(--txt3);margin-bottom:6px;margin-top:4px">📎 Anexos (${atts.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        ${atts.map(a=>{
+          const isImg=(a.mime||'').startsWith('image/');
+          const icon=isImg?'🖼️':(a.mime||'').includes('pdf')?'📄':'📎';
+          return `<a href="${esc(a.url)}" target="_blank" rel="noopener" title="${esc(a.name)} (${esc(a.mime||'?')})" style="display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--bg3);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--txt2);text-decoration:none">${icon} ${esc((a.name||'').slice(0,40))}${(a.name||'').length>40?'…':''}</a>`;
+        }).join('')}
+      </div>` : '';
     const tlHtml = expanded ? `
       <div style="border-top:1px solid var(--bg3);padding:10px 14px;background:rgba(0,0,0,.18)">
+        ${attsHtml}
         <div style="font-size:10px;color:var(--txt3);margin-bottom:6px">📜 Timeline (${(t.activityLog||[]).length} eventos · mostrando últimos ${tlEvents.length})</div>
         ${tlEvents.length===0?'<div style="color:var(--txt3);font-size:11px;text-align:center;padding:8px">Sem followups ainda</div>':tlEvents.map(e=>{
           const who=(e.who||'').replace(/^glpi:/,'');
@@ -4501,6 +4513,13 @@ function glpiOpenRespond(ticketId, title){
       </div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:10px">${esc(title||'')}</div>
       <textarea id="glpi-resp-text" placeholder="Digite sua resposta... (vai pro GLPI como followup do app)" style="width:100%;min-height:120px;background:var(--bg2);border:1px solid var(--bg3);border-radius:6px;padding:10px;color:var(--txt);font:13px/1.4 inherit;resize:vertical"></textarea>
+      <div style="margin-top:10px">
+        <label style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1px dashed var(--bg3);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;color:var(--txt2)">
+          📎 Anexar arquivo(s)
+          <input type="file" id="glpi-resp-files" multiple style="display:none" onchange="glpiUpdateAttachList()">
+        </label>
+        <span id="glpi-resp-files-list" style="font-size:11px;color:var(--txt3);margin-left:8px"></span>
+      </div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
         <label style="color:var(--txt2);font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
           <input type="checkbox" id="glpi-resp-private"> 🔒 Privado (só técnicos)
@@ -4517,12 +4536,22 @@ function glpiOpenRespond(ticketId, title){
   modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
   setTimeout(()=>document.getElementById('glpi-resp-text')?.focus(),50);
 }
+function glpiUpdateAttachList(){
+  const inp=document.getElementById('glpi-resp-files');
+  const list=document.getElementById('glpi-resp-files-list');
+  if(!inp||!list)return;
+  const files=Array.from(inp.files||[]);
+  if(!files.length){list.textContent='';return;}
+  const total=files.reduce((s,f)=>s+f.size,0);
+  list.innerHTML=files.map(f=>`📎 ${esc(f.name)} <span style="color:var(--txt3)">(${(f.size/1024).toFixed(0)} KB)</span>`).join(' · ')+` <span style="color:var(--txt3)">— total ${(total/1024).toFixed(0)} KB</span>`;
+}
 async function glpiSubmitRespond(ticketId){
   const text=document.getElementById('glpi-resp-text').value.trim();
   const isPrivate=document.getElementById('glpi-resp-private').checked;
+  const files=Array.from(document.getElementById('glpi-resp-files')?.files||[]);
   const status=document.getElementById('glpi-resp-status');
   if(!text){status.innerHTML='<span style="color:var(--red)">Texto obrigatório</span>';return;}
-  // Token vem (em ordem): settings.json no Drive → localStorage (legacy) → prompt
+  // Token: settings.json no Drive → localStorage (legacy) → prompt
   let token=state.settings?.glpiAppToken || localStorage.getItem('pm_app_respond_token');
   if(!token){
     token=prompt('Token PM_APP_RESPOND_TOKEN não encontrado em settings.json — cola aqui (admin):');
@@ -4532,10 +4561,15 @@ async function glpiSubmitRespond(ticketId){
   status.innerHTML='<span style="color:var(--txt2)">⏳ Enviando…</span>';
   const sendBtn=document.getElementById('glpi-resp-send');sendBtn.disabled=true;
   try{
+    const fd=new FormData();
+    fd.append('ticketId',String(ticketId));
+    fd.append('content',text);
+    fd.append('isPrivate',isPrivate?'true':'false');
+    files.forEach(f=>fd.append('files',f,f.name));
     const r=await fetch('https://pm-mcp.dfsistemas.agr.br/api/glpi/respond',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token.trim()},
-      body:JSON.stringify({ticketId,content:text,isPrivate})
+      headers:{'Authorization':'Bearer '+token.trim()},
+      body:fd
     });
     const data=await r.json();
     if(!r.ok){
@@ -4545,8 +4579,9 @@ async function glpiSubmitRespond(ticketId){
       } else status.innerHTML='<span style="color:var(--red)">Erro: '+esc(data.error||r.status)+'</span>';
       sendBtn.disabled=false;return;
     }
-    status.innerHTML='<span style="color:var(--green)">✓ Postado! Próximo sync (até 15min) traz pra cá.</span>';
-    setTimeout(()=>document.querySelector('[data-modal-root]')?.remove(),1500);
+    const attN=data.attachments||0;
+    status.innerHTML='<span style="color:var(--green)">✓ Postado!'+(attN?` ${attN} anexo(s) enviado(s).`:'')+' Próximo sync (até 15min) traz pra cá.</span>';
+    setTimeout(()=>document.querySelector('[data-modal-root]')?.remove(),1800);
   }catch(e){
     status.innerHTML='<span style="color:var(--red)">Erro de rede: '+esc(e.message)+'</span>';
     sendBtn.disabled=false;
