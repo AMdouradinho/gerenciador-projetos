@@ -1294,6 +1294,30 @@ function saveCache(){
 }
 function clearCache(){try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}}
 
+// ═══ BROADCAST CHANNEL (Fix F — abas do mesmo browser se avisam) ═══
+try{
+  window._bc=new BroadcastChannel('pm_sync');
+  window._bc.onmessage=ev=>{
+    if(!ev?.data) return;
+    const {type,projId,at}=ev.data;
+    if(type==='project-saved'&&projId&&state.folderId){
+      // Outra aba salvou esse projeto. Recarrega só ele do Drive.
+      const fileId=state.fileMap[projId+'.json'];
+      if(!fileId) return;
+      console.log('[bc] outra aba salvou',projId,'— refresh');
+      readFile(fileId).then(fresh=>{
+        const idx=state.projects.findIndex(p=>p.id===projId);
+        if(idx>=0){
+          migrateProject(fresh);
+          state.projects[idx]=fresh;
+          if(typeof render==='function') render();
+          showToast('Atualizado por outra aba',2000);
+        }
+      }).catch(e=>console.warn('[bc] refresh falhou:',e.message));
+    }
+  };
+}catch(e){console.warn('[bc] sem BroadcastChannel:',e.message);}
+
 // ═══ PENDING QUEUE (Fix A — nunca perder apontamento) ═══
 // Salva cada timeEntry no localStorage ANTES de tentar gravar no Drive.
 // Se save falhar, fica pendente; banner avisa e oferece reenviar.
@@ -1631,11 +1655,62 @@ function setSaveStatus(s){
   if(s==='saved') setTimeout(()=>{if(el.textContent==='salvo') el.textContent='';},2500);
 }
 function scheduleSave(project){if(project&&project._previewOnly){setSaveStatus('clean');return;}setSaveStatus('saving');clearTimeout(state.saveTimer);state.saveTimer=setTimeout(()=>saveProject(project),1500);}
+
+// Fix D — merge dos timeEntries (e activityLog) do projeto LOCAL com o REMOTO.
+// Mantém todas as entries por id. Se conflito de mesmo id, a mais recente (createdAt) vence.
+function mergeProjects(local,remote){
+  const result=JSON.parse(JSON.stringify(local));
+  const byId=ph=>{const m={};(ph.tasks||[]).forEach(t=>m[t.id]=t);return m;};
+  (remote.phases||[]).forEach(rph=>{
+    const lph=(result.phases||[]).find(p=>p.id===rph.id);
+    if(!lph){result.phases=result.phases||[];result.phases.push(rph);return;}
+    const lTasks=byId(lph),rTasks=byId(rph);
+    Object.values(rTasks).forEach(rt=>{
+      const lt=lTasks[rt.id];
+      if(!lt){lph.tasks.push(rt);return;}
+      // merge timeEntries
+      const seen=new Map();
+      [...(lt.timeEntries||[]),...(rt.timeEntries||[])].forEach(e=>{
+        if(!e?.id) return;
+        const prev=seen.get(e.id);
+        if(!prev||(e.createdAt||'')>(prev.createdAt||'')) seen.set(e.id,e);
+      });
+      lt.timeEntries=[...seen.values()].sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.startTime||'').localeCompare(b.startTime||''));
+      // merge activityLog (append remote entries faltantes)
+      const lLog=new Set((lt.activityLog||[]).map(e=>e.at+'|'+e.who+'|'+e.text));
+      (rt.activityLog||[]).forEach(e=>{const k=e.at+'|'+e.who+'|'+e.text;if(!lLog.has(k)){lt.activityLog=lt.activityLog||[];lt.activityLog.push(e);}});
+    });
+  });
+  return result;
+}
+
 async function saveProject(project,opts={}){
   const fname=project.id+'.json';const fileId=state.fileMap[fname];
   try{
     if(fileId){
-      try{const meta=await driveReq('GET',`/drive/v3/files/${fileId}`,{fields:'modifiedTime'});const st=new Date(meta.modifiedTime).getTime();const ot=state.modifiedTimes[fileId]||0;if(st>ot+10000){setSaveStatus('conflict');if(!confirm(`"${project.name}" foi modificado em outro dispositivo.\nSalvar mesmo assim?`)) return;}}catch(e){}
+      // Fix E — OCC com modifiedTime confiável: GET → compara → decide ação
+      let needsMerge=false;
+      try{
+        const meta=await driveReq('GET',`/drive/v3/files/${fileId}`,{fields:'modifiedTime'});
+        const st=new Date(meta.modifiedTime).getTime();
+        const ot=state.modifiedTimes[fileId]||0;
+        // 1s de tolerância (timestamps Drive têm precisão de 1s)
+        if(st>ot+1000) needsMerge=true;
+      }catch(e){/* GET falhou — tenta salvar mesmo assim */}
+
+      if(needsMerge){
+        // Fix H — auto-merge ao invés de pedir pro user decidir
+        try{
+          const remote=await readFile(fileId);
+          const merged=mergeProjects(project,remote);
+          // Aplica merged de volta no state pra UI refletir (mantém referência ao project original)
+          project.phases=merged.phases;
+          if(merged.updatedAt) project.updatedAt=merged.updatedAt;
+          console.log('[saveProject] merged conflict para',project.name);
+        }catch(e){
+          console.warn('[saveProject] merge falhou, salvando como está:',e.message);
+        }
+      }
       await updateDriveFile(fileId,project);
     }else{const f=await createDriveFile(state.folderId,fname,project);state.fileMap[fname]=f.id;}
     setSaveStatus('saved');saveCache();
@@ -1644,12 +1719,13 @@ async function saveProject(project,opts={}){
       const pending=loadPending().filter(it=>it.projId!==project.id);
       savePending(pending);updatePendingBanner();
     }
+    // Fix F: avisa outras abas do mesmo browser
+    try{if(window._bc) window._bc.postMessage({type:'project-saved',projId:project.id,at:Date.now()});}catch(e){}
     return true;
   }catch(err){
     setSaveStatus('error');
     console.error('[saveProject]',err);
     showToast('⚠ Erro ao salvar: '+err.message,8000);
-    // Mostra banner persistente se houver pendentes ou erro grave
     updatePendingBanner();
     if(opts.rethrow) throw err;
     return false;
