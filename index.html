@@ -865,6 +865,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 </head>
 <body>
 
+<!-- BANNER persistente de pendentes (Fix B) -->
+<div id="pending-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#c62828;color:#fff;padding:10px 18px;font:600 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+  <span style="font-size:18px">⚠</span>
+  <span><span class="pb-count">0</span> apontamento(s) ainda não salvo(s) no Drive</span>
+  <button onclick="flushPendingQueue()" style="margin-left:auto;background:#fff;color:#c62828;border:none;padding:6px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px">↻ Reenviar agora</button>
+  <button onclick="showPendingDetails()" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Ver detalhes</button>
+</div>
+
 <!-- LOGIN -->
 <div id="login-screen">
   <h1>ProjectManager</h1>
@@ -1286,8 +1294,72 @@ function saveCache(){
 }
 function clearCache(){try{sessionStorage.removeItem(CACHE_KEY);}catch(e){}}
 
+// ═══ PENDING QUEUE (Fix A — nunca perder apontamento) ═══
+// Salva cada timeEntry no localStorage ANTES de tentar gravar no Drive.
+// Se save falhar, fica pendente; banner avisa e oferece reenviar.
+const PENDING_KEY='pm_pending_entries_v1';
+function loadPending(){try{return JSON.parse(localStorage.getItem(PENDING_KEY)||'[]');}catch(e){return [];}}
+function savePending(arr){try{localStorage.setItem(PENDING_KEY,JSON.stringify(arr));}catch(e){}}
+function pendingPush(item){const a=loadPending();a.push({...item,createdAt:Date.now(),attempts:0});savePending(a);updatePendingBanner();}
+function pendingRemove(id){savePending(loadPending().filter(x=>x.entry?.id!==id));updatePendingBanner();}
+function pendingCount(){return loadPending().length;}
+
+// ═══ ERROR BANNER (Fix B — toast persistente) ═══
+function updatePendingBanner(){
+  const el=document.getElementById('pending-banner');if(!el) return;
+  const n=pendingCount();
+  if(n===0){el.style.display='none';return;}
+  el.style.display='flex';
+  el.querySelector('.pb-count').textContent=n;
+}
+async function flushPendingQueue(opts={}){
+  const items=loadPending();if(!items.length) return {ok:0,fail:0};
+  const silent=opts.silent;
+  let ok=0,fail=0;
+  for(const item of items){
+    try{
+      const proj=state.projects.find(p=>p.id===item.projId);
+      if(!proj){pendingRemove(item.entry.id);continue;}
+      const phase=(proj.phases||[]).find(ph=>ph.id===item.phaseId);
+      const task=phase?.tasks?.find(t=>t.id===item.taskId);
+      if(!task){pendingRemove(item.entry.id);continue;}
+      // se já tá no projeto, só remove da fila
+      task.timeEntries=task.timeEntries||[];
+      if(!task.timeEntries.find(e=>e.id===item.entry.id)) task.timeEntries.push(item.entry);
+      await saveProject(proj,{skipQueue:true});
+      pendingRemove(item.entry.id);
+      ok++;
+    }catch(e){
+      item.attempts=(item.attempts||0)+1;item.lastError=e.message;
+      const arr=loadPending().map(x=>x.entry?.id===item.entry.id?item:x);savePending(arr);
+      fail++;
+    }
+  }
+  if(!silent&&(ok||fail)) showToast(`Pendentes: ${ok} reenviado(s)${fail?', '+fail+' ainda falhando':''}`,3500);
+  updatePendingBanner();
+  return {ok,fail};
+}
+
 // ═══ DRIVE ═══
-async function driveReq(method,path,params={},body=null,ct='application/json'){
+// Refresh silencioso do token Google (Fix C — cura bug "token expirou e save sumiu")
+let _refreshInFlight=null;
+function refreshGoogleToken(){
+  if(_refreshInFlight) return _refreshInFlight;
+  _refreshInFlight=new Promise((resolve,reject)=>{
+    if(!state.tokenClient){reject(new Error('no tokenClient'));return;}
+    const origCb=state.tokenClient.callback;
+    state.tokenClient.callback=(resp)=>{
+      state.tokenClient.callback=origCb;
+      _refreshInFlight=null;
+      if(resp.error) reject(new Error('refresh: '+resp.error));
+      else resolve(resp);
+    };
+    try{state.tokenClient.requestAccessToken({prompt:''});}
+    catch(e){state.tokenClient.callback=origCb;_refreshInFlight=null;reject(e);}
+  });
+  return _refreshInFlight;
+}
+async function driveReq(method,path,params={},body=null,ct='application/json',_retried=false){
   const token=gapi.client.getToken();
   if(!token) throw new Error('Not authenticated');
   const url=new URL('https://www.googleapis.com'+path);
@@ -1295,7 +1367,14 @@ async function driveReq(method,path,params={},body=null,ct='application/json'){
   const opts={method,headers:{Authorization:`Bearer ${token.access_token}`}};
   if(body!==null){opts.headers['Content-Type']=ct;opts.body=body;}
   const res=await fetch(url.toString(),opts);
-  if(!res.ok){const t=await res.text();throw new Error(`Drive ${res.status}: ${t.substring(0,200)}`);}
+  if(!res.ok){
+    // 401/403 → tenta refresh do token uma vez e retry transparente
+    if((res.status===401||res.status===403)&&!_retried){
+      try{await refreshGoogleToken();return await driveReq(method,path,params,body,ct,true);}
+      catch(refreshErr){throw new Error(`Drive ${res.status} (refresh falhou: ${refreshErr.message})`);}
+    }
+    const t=await res.text();throw new Error(`Drive ${res.status}: ${t.substring(0,200)}`);
+  }
   if(res.status===204) return null;
   return res.json();
 }
@@ -1474,10 +1553,29 @@ async function initApp(background=false){
       render();
       showToast('Sincronizado');
     }
+    // Fix A: tenta reenviar pendentes no boot + setup auto-retry a cada 90s
+    updatePendingBanner();
+    if(pendingCount()>0) setTimeout(()=>flushPendingQueue({silent:true}),3000);
+    if(!window._pendingRetryT){window._pendingRetryT=setInterval(()=>{if(pendingCount()>0) flushPendingQueue({silent:true});},90000);}
   }catch(err){
     if(!background){addLog('Erro: '+err.message);showToast('Erro: '+err.message,5000);showScreen('login');}
     else{console.warn('Background sync error:',err);}
   }
+}
+// Fix B: modal com detalhes dos pendentes
+function showPendingDetails(){
+  const items=loadPending();
+  if(!items.length){showToast('Sem pendentes');return;}
+  const lines=items.map((it,i)=>{
+    const proj=state.projects.find(p=>p.id===it.projId);
+    const projName=proj?.name||it.projId;
+    const desc=it.entry?.description||'(sem descrição)';
+    const date=it.entry?.date||'?';
+    const dur=it.entry?.durationHours||0;
+    const err=it.lastError?` · ⚠ ${it.lastError}`:'';
+    return `${i+1}. ${projName} · ${date} · ${dur}h · ${desc.slice(0,40)}${err}`;
+  }).join('\n');
+  alert(`${items.length} apontamento(s) pendente(s):\n\n${lines}\n\nClique "Reenviar agora" no banner pra tentar de novo.`);
 }
 async function refreshFromDrive(){
   if(!state.folderId){showToast('Não autenticado',3000);return;}
@@ -1533,7 +1631,7 @@ function setSaveStatus(s){
   if(s==='saved') setTimeout(()=>{if(el.textContent==='salvo') el.textContent='';},2500);
 }
 function scheduleSave(project){if(project&&project._previewOnly){setSaveStatus('clean');return;}setSaveStatus('saving');clearTimeout(state.saveTimer);state.saveTimer=setTimeout(()=>saveProject(project),1500);}
-async function saveProject(project){
+async function saveProject(project,opts={}){
   const fname=project.id+'.json';const fileId=state.fileMap[fname];
   try{
     if(fileId){
@@ -1541,7 +1639,21 @@ async function saveProject(project){
       await updateDriveFile(fileId,project);
     }else{const f=await createDriveFile(state.folderId,fname,project);state.fileMap[fname]=f.id;}
     setSaveStatus('saved');saveCache();
-  }catch(err){setSaveStatus('');showToast('Erro ao salvar: '+err.message,4000);}
+    // Fix A: limpa fila pendente desse projeto após save bem sucedido
+    if(!opts.skipQueue){
+      const pending=loadPending().filter(it=>it.projId!==project.id);
+      savePending(pending);updatePendingBanner();
+    }
+    return true;
+  }catch(err){
+    setSaveStatus('error');
+    console.error('[saveProject]',err);
+    showToast('⚠ Erro ao salvar: '+err.message,8000);
+    // Mostra banner persistente se houver pendentes ou erro grave
+    updatePendingBanner();
+    if(opts.rethrow) throw err;
+    return false;
+  }
 }
 
 // ═══ MODAL ═══
@@ -1653,6 +1765,8 @@ function saveTimeEntry(){
     createdAt:new Date().toISOString(),via:'manual'
   };
   task.timeEntries=task.timeEntries||[];task.timeEntries.push(entry);
+  // Fix A: registra na fila pendente ANTES de tentar Drive. Removido após save OK.
+  pendingPush({projId,phaseId,taskId,entry});
   proj.updatedAt=new Date().toISOString();scheduleSave(proj);
   renderApHistory(task);
   document.getElementById('ap-start').value='';
