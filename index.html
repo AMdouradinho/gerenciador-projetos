@@ -1660,6 +1660,15 @@ function scheduleSave(project){if(project&&project._previewOnly){setSaveStatus('
 // Mantém todas as entries por id. Se conflito de mesmo id, a mais recente (createdAt) vence.
 function mergeProjects(local,remote){
   const result=JSON.parse(JSON.stringify(local));
+  // Preserva lastModifiedBy e auditLog merged
+  if(remote.lastModifiedBy?.at&&(!result.lastModifiedBy?.at||remote.lastModifiedBy.at>result.lastModifiedBy.at)){
+    result.lastModifiedBy=remote.lastModifiedBy;
+  }
+  if(Array.isArray(remote.auditLog)){
+    const seenAudit=new Set((result.auditLog||[]).map(e=>e.at+'|'+e.who));
+    (remote.auditLog||[]).forEach(e=>{const k=e.at+'|'+e.who;if(!seenAudit.has(k)){result.auditLog=result.auditLog||[];result.auditLog.push(e);}});
+    if((result.auditLog||[]).length>20){result.auditLog=result.auditLog.sort((a,b)=>(a.at||'').localeCompare(b.at||'')).slice(-20);}
+  }
   const byId=ph=>{const m={};(ph.tasks||[]).forEach(t=>m[t.id]=t);return m;};
   (remote.phases||[]).forEach(rph=>{
     const lph=(result.phases||[]).find(p=>p.id===rph.id);
@@ -1711,6 +1720,16 @@ async function saveProject(project,opts={}){
           console.warn('[saveProject] merge falhou, salvando como está:',e.message);
         }
       }
+      // Fix G — registra autoria do save no próprio projeto
+      project.lastModifiedBy={
+        email:state.currentUserEmail||'',
+        name:state.currentUserName||state.currentUserEmail||'?',
+        at:new Date().toISOString()
+      };
+      // Fix I — auditLog circular últimas 20 gravações
+      project.auditLog=Array.isArray(project.auditLog)?project.auditLog:[];
+      project.auditLog.push({at:project.lastModifiedBy.at,who:project.lastModifiedBy.name});
+      if(project.auditLog.length>20) project.auditLog=project.auditLog.slice(-20);
       await updateDriveFile(fileId,project);
     }else{const f=await createDriveFile(state.folderId,fname,project);state.fileMap[fname]=f.id;}
     setSaveStatus('saved');saveCache();
@@ -3754,7 +3773,19 @@ function renderProjListItem(p){
     </div>
     <div class="proj-bar"><div class="proj-bar-fill" style="width:${s.pct}%;background:${colors[s.health]}"></div></div>
     ${(s.overdue||s.blocked)?`<div class="proj-tags">${s.overdue?`<span class="proj-tag red">⚠ ${s.overdue}</span>`:''}${s.blocked?`<span class="proj-tag amber">🔒 ${s.blocked}</span>`:''}</div>`:''}
+    ${renderLastEditedBadge(p)}
   </div>`;
+}
+
+// Fix G+I — Badge "última gravação: X há Ymin" no card
+function renderLastEditedBadge(p){
+  const lm=p.lastModifiedBy;if(!lm?.at) return '';
+  const me=(state.currentUserEmail||'').toLowerCase();
+  if((lm.email||'').toLowerCase()===me) return ''; // não mostra pra si mesmo
+  const mins=Math.max(0,Math.round((Date.now()-+new Date(lm.at))/60000));
+  if(mins>24*60) return ''; // ignora se mais de 24h
+  const rel=mins<1?'agora':mins<60?`há ${mins}min`:`há ${Math.round(mins/60)}h`;
+  return `<div style="font-size:9.5px;color:var(--txt3);margin-top:4px;display:flex;align-items:center;gap:4px">✏ <strong style="color:var(--txt2)">${esc(lm.name.split(' ')[0])}</strong> ${rel}</div>`;
 }
 
 function renderProjectDetailOrDashboard(){
